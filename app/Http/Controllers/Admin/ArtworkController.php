@@ -51,7 +51,7 @@ class ArtworkController extends Controller
         ]);
 
         foreach ($validated['images'] as $index => $file) {
-            $path = $file->store('artworks', 'public');
+            $path = $file->store('artworks');
 
             $artwork->images()->create([
                 'image_path' => $path,
