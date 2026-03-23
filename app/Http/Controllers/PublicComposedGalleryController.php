@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Artwork;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Storage;
 
 class PublicComposedGalleryController extends Controller
 {
