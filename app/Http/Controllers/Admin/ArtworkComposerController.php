@@ -30,7 +30,7 @@ class ArtworkComposerController extends Controller
                         ->map(function ($image, $index) {
                             return [
                                 'id' => $image->id,
-                                'url' => asset('storage/' . $image->image_path),
+                                'url' => Storage::url($image->image_path),
                                 'rotation' => $image->rotation ?? 0,
                                 'composition_position' => $image->composition_position,
                                 'fallback_position' => $index,

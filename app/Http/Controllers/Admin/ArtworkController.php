@@ -21,7 +21,7 @@ class ArtworkController extends Controller
                     return [
                         'id' => $image->id,
                         'position' => $image->position,
-                        'url' => asset('storage/' . $image->image_path),
+                        'url' => Storage::url($image->image_path),
                     ];
                 }),
             ];

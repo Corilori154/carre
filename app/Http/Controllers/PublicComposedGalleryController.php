@@ -29,7 +29,7 @@ class PublicComposedGalleryController extends Controller
                     if ($position >= 0 && $position < 9) {
                         $slots[$position] = [
                             'id' => $image->id,
-                            'url' => asset('storage/' . $image->image_path),
+                            'url' => Storage::url($image->image_path),
                             'rotation' => $image->rotation ?? 0,
                             'position' => $position + 1,
                         ];
