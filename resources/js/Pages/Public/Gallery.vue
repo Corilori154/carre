@@ -22,22 +22,22 @@ const selectedArtwork = computed(() => {
 
 <template>
     <div class="min-h-screen bg-neutral-950 text-neutral-100">
-        <div class="mx-auto max-w-6xl px-6 py-10">
-            <header class="mb-10">
-                <h1 class="text-3xl font-bold md:text-4xl">Galerie</h1>
-                <p class="mt-3 max-w-2xl text-sm text-neutral-400 md:text-base">
+        <div class="mx-auto max-w-5xl px-4 py-6 md:px-6 md:py-8">
+            <header class="mb-6">
+                <h1 class="text-2xl font-bold md:text-3xl">Galerie</h1>
+                <p class="mt-2 max-w-2xl text-sm text-neutral-400">
                     Sélectionnez un tableau pour découvrir sa grille animée.
                 </p>
             </header>
 
             <div
                 v-if="artworks.length === 0"
-                class="rounded-2xl border border-neutral-800 bg-neutral-900 p-8 text-neutral-300"
+                class="rounded-2xl border border-neutral-800 bg-neutral-900 p-6 text-neutral-300"
             >
                 Aucun tableau n’est disponible pour le moment.
             </div>
 
-            <div v-else class="space-y-8">
+            <div v-else class="space-y-6">
                 <div class="max-w-md rounded-2xl border border-neutral-800 bg-neutral-900/70 p-4">
                     <label for="artwork-select" class="mb-2 block text-sm font-medium text-neutral-300">
                         Choisir un tableau
@@ -60,22 +60,24 @@ const selectedArtwork = computed(() => {
 
                 <section
                     v-if="selectedArtwork"
-                    class="rounded-3xl border border-neutral-800 bg-neutral-900/60 p-6 shadow-xl"
+                    class="rounded-3xl border border-neutral-800 bg-neutral-900/60 p-4 md:p-5 shadow-xl"
                 >
-                    <div class="mb-6">
-                        <h2 class="text-2xl font-semibold text-white">
+                    <div class="mb-4 text-center">
+                        <h2 class="text-xl font-semibold text-white md:text-2xl">
                             {{ selectedArtwork.title }}
                         </h2>
-                        <p class="mt-2 text-sm text-neutral-400">
+                        <p class="mt-1 text-sm text-neutral-400">
                             Tableau composé de 9 images.
                         </p>
                     </div>
 
-                    <AutoArtworkGrid
-                        :key="selectedArtwork.id"
-                        :images="selectedArtwork.images"
-                        :initial-interval-seconds="shuffleIntervalSeconds"
-                    />
+                    <div class="mx-auto max-w-[680px]">
+                        <AutoArtworkGrid
+                            :key="selectedArtwork.id"
+                            :images="selectedArtwork.images"
+                            :initial-interval-seconds="shuffleIntervalSeconds"
+                        />
+                    </div>
                 </section>
             </div>
         </div>
