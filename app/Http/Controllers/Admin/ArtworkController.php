@@ -56,7 +56,7 @@ class ArtworkController extends Controller
             $artwork->images()->create([
                 'image_path' => $path,
                 'position' => $index + 1,
-            ]);
+            ]); 
         }
 
         return redirect()->route('admin.artworks.index');
