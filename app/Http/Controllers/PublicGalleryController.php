@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Artwork;
 use App\Models\SettingTime;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Storage;
 
 class PublicGalleryController extends Controller
 {
