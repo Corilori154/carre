@@ -4,6 +4,7 @@ import { useForm, Link } from '@inertiajs/vue3'
 
 const form = useForm({
     title: '',
+    background_color: '#f5f5f4',
     images: Array(9).fill(null),
 })
 
@@ -53,6 +54,46 @@ const submit = () => {
 
                             <div v-if="form.errors.title" class="mt-2 text-sm text-red-600">
                                 {{ form.errors.title }}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="mb-2 block text-sm font-semibold text-gray-800">
+                                Couleur de fond du tableau
+                            </label>
+
+                            <div class="flex flex-col gap-4 md:flex-row md:items-center">
+                                <div class="flex items-center gap-3">
+                                    <input
+                                        v-model="form.background_color"
+                                        type="color"
+                                        class="h-14 w-20 cursor-pointer rounded-lg border border-gray-300 bg-white p-1"
+                                    />
+
+                                    <input
+                                        v-model="form.background_color"
+                                        type="text"
+                                        placeholder="#f5f5f4"
+                                        class="w-36 rounded-xl border border-gray-300 px-4 py-3 text-sm shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                    />
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <span class="text-sm text-gray-600">Aperçu :</span>
+
+                                    <div
+                                        class="h-12 w-12 rounded-lg border border-gray-300 shadow-sm"
+                                        :style="{ backgroundColor: form.background_color || '#ffffff' }"
+                                    />
+                                </div>
+                            </div>
+
+                            <p class="mt-2 text-sm text-gray-500">
+                                Cette couleur sera utilisée pour le fond du tableau dans la galerie.
+                            </p>
+
+                            <div v-if="form.errors.background_color" class="mt-2 text-sm text-red-600">
+                                {{ form.errors.background_color }}
                             </div>
                         </div>
 

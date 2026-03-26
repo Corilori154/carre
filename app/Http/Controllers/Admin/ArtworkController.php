@@ -43,11 +43,13 @@ class ArtworkController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'images' => ['required', 'array', 'size:9'],
             'images.*' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'background_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
         ]);
 
         $artwork = Artwork::create([
             'title' => $validated['title'],
             'is_published' => false,
+            'background_color' => $validated['background_color'],
         ]);
 
         foreach ($validated['images'] as $index => $file) {

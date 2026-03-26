@@ -9,6 +9,7 @@ class Artwork extends Model
     protected $fillable = [
         'title',
         'is_published',
+        'background_color',
     ];
 
     public function images()

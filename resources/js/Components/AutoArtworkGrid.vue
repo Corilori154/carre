@@ -10,7 +10,21 @@ const props = defineProps({
         type: Number,
         default: 10,
     },
+    showControls: {
+        type: Boolean,
+        default: true,
+    },
+    showFullscreenButton: {
+        type: Boolean,
+        default: false,
+    },
+    isFullscreenActive: {
+        type: Boolean,
+        default: false,
+    },
 })
+
+const emit = defineEmits(['fullscreen'])
 
 const ROTATIONS = [0, 90, 180, 270]
 const ROTATE_STEP_MS = 350
@@ -28,6 +42,10 @@ let autoTimer = null
 let countdownTimer = null
 
 const hasEnoughImages = computed(() => props.images.length === 9)
+
+function getAnimationHost() {
+    return document.fullscreenElement || document.body
+}
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms))
@@ -59,10 +77,6 @@ function initTiles() {
 
 function getTileElement(id) {
     return gridRef.value?.querySelector(`[data-tile-id="${id}"]`)
-}
-
-function getImageElement(id) {
-    return gridRef.value?.querySelector(`[data-image-id="${id}"]`)
 }
 
 async function rotateOneByOne(items) {
@@ -123,7 +137,7 @@ async function moveOneByOne(moveItems, newOrder) {
         clone.style.transform = 'translate(0px, 0px)'
         clone.style.willChange = 'transform'
 
-        document.body.appendChild(clone)
+        getAnimationHost().appendChild(clone)
 
         realEl.style.visibility = 'hidden'
 
@@ -225,6 +239,14 @@ watch(
     { deep: true }
 )
 
+watch(
+    () => props.initialIntervalSeconds,
+    (value) => {
+        intervalSeconds.value = value
+        startAutoTimer()
+    }
+)
+
 onMounted(() => {
     initTiles()
     startAutoTimer()
@@ -237,9 +259,10 @@ onBeforeUnmount(() => {
 
 <template>
     <div class="space-y-4">
-        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-
-
+        <div
+            v-if="showControls"
+            class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+        >
             <div class="flex flex-wrap items-center gap-2">
                 <label class="text-sm text-neutral-300">Intervalle auto :</label>
 
@@ -248,14 +271,14 @@ onBeforeUnmount(() => {
                     type="number"
                     min="1"
                     step="1"
-                    class="w-24 rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
+                    class="w-24 border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
                 />
 
                 <span class="text-sm text-neutral-400">secondes</span>
 
                 <button
                     type="button"
-                    class="rounded-xl bg-neutral-800 px-3 py-2 text-sm transition hover:bg-neutral-700"
+                    class="bg-neutral-800 px-3 py-2 text-sm transition hover:bg-neutral-700"
                     @click="applyInterval"
                 >
                     Appliquer
@@ -263,7 +286,7 @@ onBeforeUnmount(() => {
 
                 <button
                     type="button"
-                    class="rounded-xl bg-neutral-800 px-3 py-2 text-sm transition hover:bg-neutral-700"
+                    class="bg-neutral-800 px-3 py-2 text-sm transition hover:bg-neutral-700"
                     @click="shuffleSequentially"
                 >
                     Mélanger maintenant
@@ -277,35 +300,87 @@ onBeforeUnmount(() => {
 
         <div
             v-if="!hasEnoughImages"
-            class="rounded-2xl border border-red-800 bg-red-950/40 p-4 text-sm text-red-200"
+            class="border border-red-800 bg-red-950/40 p-4 text-sm text-red-200"
         >
             Ce tableau ne contient pas exactement 9 images.
         </div>
 
-        <div
-            v-else
-            ref="gridRef"
-            class="grid grid-cols-3 gap-3 md:gap-4"
-        >
+        <div v-else class="relative">
             <div
-                v-for="tile in tiles"
-                :key="tile.id"
-                :data-tile-id="tile.id"
-                class="relative aspect-square overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900 shadow"
-                style="will-change: transform; transform-origin: center;"
+                class="relative mx-auto aspect-square w-full max-w-[680px] bg-neutral-100 shadow-2xl"
+                :class="props.isFullscreenActive ? 'max-w-[min(88vw,88vh)]' : ''"
+                style="
+                    padding: 8.75%;
+                "
             >
-                <img
-                    :data-image-id="tile.id"
-                    :src="tile.url"
-                    :alt="`Image ${tile.position}`"
-                    class="h-full w-full object-cover"
-                    :style="{
-                        transform: `rotate(${tile.rotation}deg)`,
-                        transition: `transform ${ROTATE_STEP_MS}ms ${ROTATE_EASING}`,
-                        willChange: 'transform',
-                        transformOrigin: 'center',
-                    }"
-                />
+                <div
+                    ref="gridRef"
+                    class="grid h-full w-full grid-cols-3"
+                    style="gap: 4.5454545455%;"
+                >
+                    <div
+                        v-for="tile in tiles"
+                        :key="tile.id"
+                        :data-tile-id="tile.id"
+                        class="relative aspect-square overflow-hidden bg-neutral-900 shadow"
+                        style="will-change: transform; transform-origin: center;"
+                    >
+                        <img
+                            :src="tile.url"
+                            :alt="`Image ${tile.position}`"
+                            class="h-full w-full object-cover"
+                            :style="{
+                                transform: `rotate(${tile.rotation}deg)`,
+                                transition: `transform ${ROTATE_STEP_MS}ms ${ROTATE_EASING}`,
+                                willChange: 'transform',
+                                transformOrigin: 'center',
+                            }"
+                        />
+                    </div>
+                </div>
+
+                <button
+                    v-if="showFullscreenButton"
+                    type="button"
+                    class="absolute bottom-3 right-3 z-10 flex h-11 w-11 items-center justify-center border border-neutral-700 bg-black/70 text-white backdrop-blur-sm transition hover:bg-black/85"
+                    :aria-label="isFullscreenActive ? 'Quitter le plein écran' : 'Passer en plein écran'"
+                    :title="isFullscreenActive ? 'Quitter le plein écran' : 'Passer en plein écran'"
+                    @click="emit('fullscreen')"
+                >
+                    <svg
+                        v-if="!isFullscreenActive"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        class="h-5 w-5"
+                    >
+                        <path d="M8 3H3v5" />
+                        <path d="M16 3h5v5" />
+                        <path d="M21 16v5h-5" />
+                        <path d="M3 16v5h5" />
+                    </svg>
+
+                    <svg
+                        v-else
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        class="h-5 w-5"
+                    >
+                        <path d="M9 3H3v6" />
+                        <path d="M15 3h6v6" />
+                        <path d="M21 15v6h-6" />
+                        <path d="M3 15v6h6" />
+                        <path d="M8 8L3 3" />
+                        <path d="M16 8l5-5" />
+                        <path d="M8 16l-5 5" />
+                        <path d="M16 16l5 5" />
+                    </svg>
+                </button>
             </div>
         </div>
     </div>
