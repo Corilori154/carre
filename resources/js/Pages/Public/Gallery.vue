@@ -125,6 +125,7 @@ onBeforeUnmount(() => {
                         :show-controls="!isFullscreen"
                         :show-fullscreen-button="true"
                         :is-fullscreen-active="isFullscreen"
+                        :background-color="selectedArtwork.background_color"
                         @fullscreen="toggleFullscreen"
                     />
                 </div>

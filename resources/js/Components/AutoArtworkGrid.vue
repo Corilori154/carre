@@ -22,6 +22,10 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
+     backgroundColor: {
+        type: String,
+        default: '#f5f5f4',
+    },
 })
 
 const emit = defineEmits(['fullscreen'])
@@ -307,7 +311,8 @@ onBeforeUnmount(() => {
 
         <div v-else class="relative">
             <div
-                class="relative mx-auto aspect-square w-full max-w-[680px] bg-neutral-100 shadow-2xl"
+                class="relative mx-auto aspect-square w-full max-w-[680px] shadow-2xl"
+                :style="{ backgroundColor: backgroundColor }"
                 :class="props.isFullscreenActive ? 'max-w-[min(88vw,88vh)]' : ''"
                 style="
                     padding: 8.75%;

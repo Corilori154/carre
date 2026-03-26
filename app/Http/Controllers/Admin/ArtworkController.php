@@ -16,6 +16,7 @@ class ArtworkController extends Controller
             return [
                 'id' => $artwork->id,
                 'title' => $artwork->title,
+                'background_color' => $artwork->background_color, // ✅ IMPORTANT
                 'is_published' => $artwork->is_published,
                 'images' => $artwork->images->map(function ($image) {
                     return [
