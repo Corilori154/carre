@@ -3,11 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Artwork;
-use App\Models\SettingTime;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
-class PublicGalleryController extends Controller
+class PublicArtworkComposerController extends Controller
 {
     public function index()
     {
@@ -31,9 +30,8 @@ class PublicGalleryController extends Controller
             ];
         });
 
-        return Inertia::render('Public/Gallery', [
+        return Inertia::render('Public/ComposeArtwork', [
             'artworks' => $artworks,
-            'shuffleIntervalSeconds' => (int) SettingTime::getValue('shuffle_interval_seconds', 10),
         ]);
     }
 }

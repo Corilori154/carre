@@ -7,6 +7,7 @@ use App\Http\Controllers\PublicGalleryController;
 use App\Http\Controllers\Admin\SettingTimeController;
 use App\Http\Controllers\PublicComposedGalleryController;
 use App\Http\Controllers\Admin\ArtworkComposerController;
+use App\Http\Controllers\PublicArtworkComposerController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -27,6 +28,10 @@ Route::get('/', function () {
 });
 
 Route::get('/gallery', [PublicGalleryController::class, 'index'])->name('gallery');
+
+
+Route::get('/compose-your-artwork', [PublicArtworkComposerController::class, 'index'])
+    ->name('public.compose-artwork');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');

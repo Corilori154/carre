@@ -21,6 +21,8 @@
         "vue": "^3.4.0"
     },
     "dependencies": {
-        "@inertiajs/vue3": "^2.3.17"
+        "@inertiajs/vue3": "^2.3.17",
+        "html-to-image": "^1.11.13",
+        "vuedraggable": "^4.1.0"
     }
 }
