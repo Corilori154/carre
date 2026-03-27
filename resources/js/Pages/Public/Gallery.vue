@@ -146,6 +146,7 @@ onBeforeUnmount(() => {
                         :initial-interval-seconds="shuffleIntervalSeconds"
                         :show-controls="!isFullscreen"
                         :show-manual-buttons="false"
+                        :allow-video-download="!isFullscreen"
                         :show-fullscreen-button="true"
                         :is-fullscreen-active="isFullscreen"
                         :background-color="selectedArtwork.background_color"

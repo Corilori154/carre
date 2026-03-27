@@ -1,5 +1,6 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { toCanvas } from 'html-to-image'
 
 const props = defineProps({
     images: {
@@ -30,6 +31,10 @@ const props = defineProps({
         type: Boolean,
         default: true,
     },
+    allowVideoDownload: {
+        type: Boolean,
+        default: false,
+    },
 })
 
 const emit = defineEmits(['fullscreen', 'shuffle-start'])
@@ -40,9 +45,12 @@ const MOVE_STEP_MS = 550
 const MOVE_EASING = 'cubic-bezier(.2,.8,.2,1)'
 const ROTATE_EASING = 'cubic-bezier(.22,1,.36,1)'
 
+const boardContainerRef = ref(null)
 const gridRef = ref(null)
 const tiles = ref([])
 const autoAnimating = ref(false)
+const isRecording = ref(false)
+
 const intervalSeconds = ref(props.initialIntervalSeconds)
 const nextTickAt = ref(Date.now() + intervalSeconds.value * 1000)
 const countdown = ref(intervalSeconds.value)
@@ -163,6 +171,53 @@ async function moveOneByOne(moveItems, newOrder) {
     }
 }
 
+function buildShufflePlan() {
+    const oldOrder = tiles.value.slice()
+    const newOrder = shuffleArray(tiles.value.slice())
+    const targetRotations = newOrder.map(() => randomRotation())
+
+    const oldIndexById = new Map(oldOrder.map((item, index) => [item.id, index]))
+    const stationary = []
+    const moving = []
+
+    newOrder.forEach((item, newIndex) => {
+        const oldIndex = oldIndexById.get(item.id)
+        const payload = {
+            id: item.id,
+            oldIndex,
+            newIndex,
+            toDeg: targetRotations[newIndex],
+        }
+
+        if (oldIndex === newIndex) {
+            stationary.push(payload)
+        } else {
+            moving.push(payload)
+        }
+    })
+
+    return {
+        newOrder,
+        stationary,
+        moving,
+    }
+}
+
+function getShuffleDurationMs(plan) {
+    return (
+        (plan.stationary.length * (ROTATE_STEP_MS + 60)) +
+        (plan.moving.length * (MOVE_STEP_MS + 70)) +
+        (plan.moving.length * (ROTATE_STEP_MS + 60)) +
+        250
+    )
+}
+
+async function runShufflePlan(plan) {
+    await rotateOneByOne(plan.stationary)
+    await moveOneByOne(plan.moving, plan.newOrder)
+    await rotateOneByOne(plan.moving)
+}
+
 function resetNextTick(fromTime = Date.now()) {
     nextTickAt.value = fromTime + intervalSeconds.value * 1000
     countdown.value = intervalSeconds.value
@@ -191,48 +246,28 @@ function scheduleNextShuffle(delayMs) {
     }, Math.max(0, delayMs))
 }
 
-async function shuffleSequentially() {
+async function playShufflePlan(plan, { scheduleNext = true } = {}) {
     if (autoAnimating.value || !hasEnoughImages.value) return
 
     autoAnimating.value = true
 
     const shuffleStartedAt = Date.now()
-
     emit('shuffle-start')
     resetNextTick(shuffleStartedAt)
 
-    const oldOrder = tiles.value.slice()
-    const newOrder = shuffleArray(tiles.value.slice())
-    const targetRotations = newOrder.map(() => randomRotation())
-
-    const oldIndexById = new Map(oldOrder.map((item, index) => [item.id, index]))
-    const stationary = []
-    const moving = []
-
-    newOrder.forEach((item, newIndex) => {
-        const oldIndex = oldIndexById.get(item.id)
-        const payload = {
-            id: item.id,
-            oldIndex,
-            newIndex,
-            toDeg: targetRotations[newIndex],
-        }
-
-        if (oldIndex === newIndex) {
-            stationary.push(payload)
-        } else {
-            moving.push(payload)
-        }
-    })
-
-    await rotateOneByOne(stationary)
-    await moveOneByOne(moving, newOrder)
-    await rotateOneByOne(moving)
+    await runShufflePlan(plan)
 
     autoAnimating.value = false
 
-    const remainingMs = nextTickAt.value - Date.now()
-    scheduleNextShuffle(remainingMs)
+    if (scheduleNext) {
+        const remainingMs = nextTickAt.value - Date.now()
+        scheduleNextShuffle(remainingMs)
+    }
+}
+
+async function shuffleSequentially() {
+    const plan = buildShufflePlan()
+    await playShufflePlan(plan)
 }
 
 function stopAutoTimer() {
@@ -266,6 +301,136 @@ function applyInterval() {
     }
 
     startAutoTimer()
+}
+
+function getSupportedVideoMimeType() {
+    const candidates = [
+        'video/webm;codecs=vp9',
+        'video/webm;codecs=vp8',
+        'video/webm',
+    ]
+
+    return candidates.find(type => MediaRecorder.isTypeSupported(type)) || ''
+}
+
+async function renderBoardToCanvas(targetCanvas, ctx) {
+    const sourceEl = boardContainerRef.value
+    if (!sourceEl) return
+
+    const sourceRect = sourceEl.getBoundingClientRect()
+    const snapshotCanvas = await toCanvas(sourceEl, {
+        cacheBust: true,
+        pixelRatio: 1,
+        backgroundColor: props.backgroundColor,
+        skipFonts: true,
+        width: Math.round(sourceRect.width),
+        height: Math.round(sourceRect.height),
+        canvasWidth: targetCanvas.width,
+        canvasHeight: targetCanvas.height,
+    })
+
+    ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height)
+    ctx.drawImage(snapshotCanvas, 0, 0, targetCanvas.width, targetCanvas.height)
+}
+
+async function downloadAnimationVideo() {
+    if (isRecording.value || !boardContainerRef.value || !hasEnoughImages.value) return
+
+    if (typeof MediaRecorder === 'undefined') {
+        alert('Votre navigateur ne supporte pas l’enregistrement vidéo.')
+        return
+    }
+
+    const mimeType = getSupportedVideoMimeType()
+
+    if (!mimeType) {
+        alert('Aucun format vidéo WebM compatible n’a été trouvé sur ce navigateur.')
+        return
+    }
+
+    isRecording.value = true
+    stopAutoTimer()
+
+    const plan = buildShufflePlan()
+    const durationMs = getShuffleDurationMs(plan)
+    const fps = 12
+
+    const sourceRect = boardContainerRef.value.getBoundingClientRect()
+    const outputCanvas = document.createElement('canvas')
+    outputCanvas.width = Math.max(720, Math.round(sourceRect.width * 2))
+    outputCanvas.height = Math.max(720, Math.round(sourceRect.height * 2))
+
+    const ctx = outputCanvas.getContext('2d')
+    if (!ctx) {
+        isRecording.value = false
+        startAutoTimer()
+        alert('Impossible de créer le contexte vidéo.')
+        return
+    }
+
+    const stream = outputCanvas.captureStream(fps)
+    const recorder = new MediaRecorder(stream, {
+        mimeType,
+        videoBitsPerSecond: 8_000_000,
+    })
+
+    const chunks = []
+
+    recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+            chunks.push(event.data)
+        }
+    }
+
+    const stopPromise = new Promise((resolve) => {
+        recorder.onstop = resolve
+    })
+
+    let keepRendering = true
+
+    const renderLoop = async () => {
+        while (keepRendering) {
+            await renderBoardToCanvas(outputCanvas, ctx)
+            await sleep(1000 / fps)
+        }
+    }
+
+    try {
+        await nextTick()
+        await renderBoardToCanvas(outputCanvas, ctx)
+
+        recorder.start()
+
+        const renderPromise = renderLoop()
+
+        await playShufflePlan(plan, { scheduleNext: false })
+        await sleep(300)
+
+        keepRendering = false
+        await renderPromise
+
+        recorder.stop()
+        await stopPromise
+
+        const blob = new Blob(chunks, { type: mimeType })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+
+        link.href = url
+        link.download = 'animation-tableau.webm'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        URL.revokeObjectURL(url)
+    } catch (error) {
+        console.error('Erreur export vidéo :', error)
+        alert('Le téléchargement de la vidéo a échoué.')
+    } finally {
+        stream.getTracks().forEach(track => track.stop())
+        isRecording.value = false
+        startAutoTimer()
+    }
 }
 
 watch(
@@ -302,9 +467,6 @@ onBeforeUnmount(() => {
             class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
         >
             <div class="flex flex-wrap items-center gap-2">
-                <label class="text-sm text-neutral-300">Intervalle auto :</label>
-
-
                 <button
                     v-if="showManualButtons"
                     type="button"
@@ -324,7 +486,7 @@ onBeforeUnmount(() => {
                 </button>
 
                 <span class="text-sm tabular-nums text-neutral-300">
-                    Prochain shuffle : {{ countdown }}s
+                    Prochaine combinaison : {{ countdown }}s
                 </span>
             </div>
         </div>
@@ -338,6 +500,7 @@ onBeforeUnmount(() => {
 
         <div v-else class="relative">
             <div
+                ref="boardContainerRef"
                 class="relative mx-auto aspect-square w-full max-w-[680px] shadow-2xl"
                 :style="{ backgroundColor: backgroundColor, padding: '8.75%' }"
                 :class="props.isFullscreenActive ? 'max-w-[min(88vw,88vh)]' : ''"
@@ -409,6 +572,21 @@ onBeforeUnmount(() => {
                         <path d="M8 16l-5 5" />
                         <path d="M16 16l5 5" />
                     </svg>
+                </button>
+            </div>
+
+            <div
+                v-if="allowVideoDownload && !isFullscreenActive"
+                class="mt-6 flex justify-center"
+            >
+                <button
+                    type="button"
+                    class="rounded-xl bg-white px-6 py-3 font-semibold text-black transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="isRecording"
+                    @click="downloadAnimationVideo"
+                >
+                    <span v-if="isRecording">Enregistrement vidéo…</span>
+                    <span v-else>Télécharger l’animation en vidéo</span>
                 </button>
             </div>
         </div>
