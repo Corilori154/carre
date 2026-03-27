@@ -304,15 +304,6 @@ onBeforeUnmount(() => {
             <div class="flex flex-wrap items-center gap-2">
                 <label class="text-sm text-neutral-300">Intervalle auto :</label>
 
-                <input
-                    v-model.number="intervalSeconds"
-                    type="number"
-                    min="1"
-                    step="1"
-                    class="w-24 border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
-                />
-
-                <span class="text-sm text-neutral-400">secondes</span>
 
                 <button
                     v-if="showManualButtons"
