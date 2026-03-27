@@ -17,18 +17,19 @@ class PublicGalleryController extends Controller
         ->latest()
         ->get()
         ->map(function ($artwork) {
-            return [
-                'id' => $artwork->id,
-                'title' => $artwork->title,
-                'background_color' => $artwork->background_color,
-                'images' => $artwork->images->map(function ($image) {
-                    return [
-                        'id' => $image->id,
-                        'position' => $image->position,
-                        'url' => Storage::url($image->image_path),
-                    ];
-                })->values(),
-            ];
+           return [
+            'id' => $artwork->id,
+            'title' => $artwork->title,
+            'background_color' => $artwork->background_color,
+            'generated_count' => $artwork->generated_count,
+            'images' => $artwork->images->map(function ($image) {
+                return [
+                    'id' => $image->id,
+                    'position' => $image->position,
+                    'url' => Storage::url($image->image_path),
+                ];
+            })->values(),
+        ];
         });
 
         return Inertia::render('Public/Gallery', [

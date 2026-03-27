@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import AutoArtworkGrid from '@/Components/AutoArtworkGrid.vue'
 
 const props = defineProps({
@@ -16,10 +16,19 @@ const props = defineProps({
 const selectedArtworkId = ref(props.artworks.length ? props.artworks[0].id : null)
 const isFullscreen = ref(false)
 const fullscreenContainerRef = ref(null)
+const liveGeneratedCount = ref(0)
 
 const selectedArtwork = computed(() => {
     return props.artworks.find(artwork => artwork.id === selectedArtworkId.value) || null
 })
+
+function updateLiveGeneratedCount() {
+    liveGeneratedCount.value = selectedArtwork.value?.generated_count ?? 0
+}
+
+function handleShuffleStart() {
+    liveGeneratedCount.value += 1
+}
 
 async function toggleFullscreen() {
     const container = fullscreenContainerRef.value
@@ -41,8 +50,13 @@ function handleFullscreenChange() {
     isFullscreen.value = document.fullscreenElement === fullscreenContainerRef.value
 }
 
+watch(selectedArtworkId, () => {
+    updateLiveGeneratedCount()
+})
+
 onMounted(() => {
     document.addEventListener('fullscreenchange', handleFullscreenChange)
+    updateLiveGeneratedCount()
 })
 
 onBeforeUnmount(() => {
@@ -112,8 +126,16 @@ onBeforeUnmount(() => {
                     <h2 class="text-xl font-semibold text-white md:text-2xl">
                         {{ selectedArtwork.title }}
                     </h2>
+
                     <p class="mt-1 text-sm text-neutral-400">
                         Tableau composé de 9 images.
+                    </p>
+
+                    <p class="mt-2 text-sm text-neutral-300">
+                        Nombre de tableaux générés depuis sa création :
+                        <span class="font-semibold text-white">
+                            {{ liveGeneratedCount }}
+                        </span>
                     </p>
                 </div>
 
@@ -123,10 +145,12 @@ onBeforeUnmount(() => {
                         :images="selectedArtwork.images"
                         :initial-interval-seconds="shuffleIntervalSeconds"
                         :show-controls="!isFullscreen"
+                        :show-manual-buttons="false"
                         :show-fullscreen-button="true"
                         :is-fullscreen-active="isFullscreen"
                         :background-color="selectedArtwork.background_color"
                         @fullscreen="toggleFullscreen"
+                        @shuffle-start="handleShuffleStart"
                     />
                 </div>
             </section>

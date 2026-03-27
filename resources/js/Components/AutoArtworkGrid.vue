@@ -22,13 +22,17 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
-     backgroundColor: {
+    backgroundColor: {
         type: String,
         default: '#f5f5f4',
     },
+    showManualButtons: {
+        type: Boolean,
+        default: true,
+    },
 })
 
-const emit = defineEmits(['fullscreen'])
+const emit = defineEmits(['fullscreen', 'shuffle-start'])
 
 const ROTATIONS = [0, 90, 180, 270]
 const ROTATE_STEP_MS = 350
@@ -42,6 +46,7 @@ const autoAnimating = ref(false)
 const intervalSeconds = ref(props.initialIntervalSeconds)
 const nextTickAt = ref(Date.now() + intervalSeconds.value * 1000)
 const countdown = ref(intervalSeconds.value)
+
 let autoTimer = null
 let countdownTimer = null
 
@@ -158,10 +163,43 @@ async function moveOneByOne(moveItems, newOrder) {
     }
 }
 
+function resetNextTick(fromTime = Date.now()) {
+    nextTickAt.value = fromTime + intervalSeconds.value * 1000
+    countdown.value = intervalSeconds.value
+}
+
+function startCountdownTimer() {
+    if (countdownTimer) {
+        clearInterval(countdownTimer)
+        countdownTimer = null
+    }
+
+    countdownTimer = setInterval(() => {
+        const msLeft = Math.max(0, nextTickAt.value - Date.now())
+        countdown.value = Math.max(0, Math.ceil(msLeft / 1000))
+    }, 200)
+}
+
+function scheduleNextShuffle(delayMs) {
+    if (autoTimer) {
+        clearTimeout(autoTimer)
+        autoTimer = null
+    }
+
+    autoTimer = setTimeout(async () => {
+        await shuffleSequentially()
+    }, Math.max(0, delayMs))
+}
+
 async function shuffleSequentially() {
     if (autoAnimating.value || !hasEnoughImages.value) return
 
     autoAnimating.value = true
+
+    const shuffleStartedAt = Date.now()
+
+    emit('shuffle-start')
+    resetNextTick(shuffleStartedAt)
 
     const oldOrder = tiles.value.slice()
     const newOrder = shuffleArray(tiles.value.slice())
@@ -192,31 +230,14 @@ async function shuffleSequentially() {
     await rotateOneByOne(moving)
 
     autoAnimating.value = false
-    resetNextTick()
-}
 
-function resetNextTick() {
-    nextTickAt.value = Date.now() + intervalSeconds.value * 1000
-}
-
-function startAutoTimer() {
-    stopAutoTimer()
-
-    resetNextTick()
-
-    autoTimer = setInterval(() => {
-        shuffleSequentially()
-    }, intervalSeconds.value * 1000)
-
-    countdownTimer = setInterval(() => {
-        const msLeft = Math.max(0, nextTickAt.value - Date.now())
-        countdown.value = Math.ceil(msLeft / 1000)
-    }, 200)
+    const remainingMs = nextTickAt.value - Date.now()
+    scheduleNextShuffle(remainingMs)
 }
 
 function stopAutoTimer() {
     if (autoTimer) {
-        clearInterval(autoTimer)
+        clearTimeout(autoTimer)
         autoTimer = null
     }
 
@@ -224,6 +245,19 @@ function stopAutoTimer() {
         clearInterval(countdownTimer)
         countdownTimer = null
     }
+}
+
+function startAutoTimer() {
+    stopAutoTimer()
+
+    if (!hasEnoughImages.value) {
+        countdown.value = 0
+        return
+    }
+
+    resetNextTick()
+    startCountdownTimer()
+    scheduleNextShuffle(intervalSeconds.value * 1000)
 }
 
 function applyInterval() {
@@ -281,6 +315,7 @@ onBeforeUnmount(() => {
                 <span class="text-sm text-neutral-400">secondes</span>
 
                 <button
+                    v-if="showManualButtons"
                     type="button"
                     class="bg-neutral-800 px-3 py-2 text-sm transition hover:bg-neutral-700"
                     @click="applyInterval"
@@ -289,6 +324,7 @@ onBeforeUnmount(() => {
                 </button>
 
                 <button
+                    v-if="showManualButtons"
                     type="button"
                     class="bg-neutral-800 px-3 py-2 text-sm transition hover:bg-neutral-700"
                     @click="shuffleSequentially"
@@ -312,11 +348,8 @@ onBeforeUnmount(() => {
         <div v-else class="relative">
             <div
                 class="relative mx-auto aspect-square w-full max-w-[680px] shadow-2xl"
-                :style="{ backgroundColor: backgroundColor }"
+                :style="{ backgroundColor: backgroundColor, padding: '8.75%' }"
                 :class="props.isFullscreenActive ? 'max-w-[min(88vw,88vh)]' : ''"
-                style="
-                    padding: 8.75%;
-                "
             >
                 <div
                     ref="gridRef"

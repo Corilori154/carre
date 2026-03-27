@@ -16,4 +16,21 @@ class Artwork extends Model
     {
         return $this->hasMany(ArtworkImage::class)->orderBy('position');
     }
+
+    public function getGeneratedCountAttribute(): int
+    {
+        $interval = (int) SettingTime::getValue('shuffle_interval_seconds', 10);
+
+        if ($interval <= 0 || !$this->created_at) {
+            return 0;
+        }
+
+        $secondsSinceCreation = now()->timestamp - $this->created_at->timestamp;
+
+        if ($secondsSinceCreation < 0) {
+            return 0;
+        }
+
+        return (int) floor($secondsSinceCreation / $interval);
+    }
 }
