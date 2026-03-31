@@ -20,6 +20,14 @@ const availableImages = ref([])
 const boardSlots = ref(Array.from({ length: 9 }, () => []))
 const boardRef = ref(null)
 
+const BOARD_OUTER_SIZE = 80
+const FRAME_SIZE = 7
+const INNER_GAP = 3
+
+const boardPaddingPercent = `${(FRAME_SIZE / BOARD_OUTER_SIZE) * 100}%`
+const innerSize = BOARD_OUTER_SIZE - (FRAME_SIZE * 2)
+const innerGapPercent = `${(INNER_GAP / innerSize) * 100}%`
+
 function makeImageInstance(image) {
     return {
         ...image,
@@ -70,7 +78,7 @@ async function exportImage() {
         const dataUrl = await toPng(boardRef.value, {
             cacheBust: true,
             pixelRatio: 2,
-            skipFonts: true, // ✅ LA CLÉ
+            skipFonts: true,
             backgroundColor: selectedArtwork.value?.background_color || '#f5f5f4',
         })
 
@@ -126,27 +134,27 @@ async function exportImage() {
                 </select>
             </div>
 
-
             <div
                 v-if="selectedArtwork"
                 class="flex justify-center"
             >
                 <div
                     ref="boardRef"
-                    class="relative aspect-square w-full max-w-[min(92vw,92vh)] shadow-2xl"
+                    class="relative aspect-square w-full shadow-2xl"
                     :style="{
-                        padding: '8.75%',
+                        width: 'min(92vw, 92vh, 980px)',
+                        padding: boardPaddingPercent,
                         backgroundColor: selectedArtwork.background_color || '#f5f5f4',
                     }"
                 >
                     <div
                         class="grid h-full w-full grid-cols-3"
-                        style="gap: 4.5454545455%;"
+                        :style="{ gap: innerGapPercent }"
                     >
                         <div
                             v-for="(slot, index) in boardSlots"
                             :key="index"
-                            class="relative aspect-square overflow-hidden bg-white/100"
+                            class="relative aspect-square overflow-hidden bg-white"
                         >
                             <Draggable
                                 v-model="boardSlots[index]"
@@ -171,7 +179,7 @@ async function exportImage() {
 
                             <div
                                 v-if="!slot.length"
-                                class="pointer-events-none absolute inset-0 flex items-center justify-center text-xs text-neutral-600"
+                                class="pointer-events-none absolute inset-0 flex items-center justify-center text-center text-[10px] sm:text-xs text-neutral-600"
                             >
                                 Déposer
                             </div>
@@ -190,7 +198,6 @@ async function exportImage() {
                 </button>
             </div>
 
-
             <div
                 v-if="selectedArtwork"
                 class="mt-10"
@@ -205,10 +212,10 @@ async function exportImage() {
                     :group="{ name: 'board-images', pull: 'clone', put: false }"
                     :sort="false"
                     :clone="cloneImage"
-                    class="flex flex-wrap justify-center gap-4"
+                    class="flex flex-wrap justify-center gap-3 sm:gap-4"
                 >
                     <template #item="{ element }">
-                        <div class="h-24 w-24 overflow-hidden border border-neutral-700 bg-neutral-900 shadow">
+                        <div class="h-20 w-20 overflow-hidden border border-neutral-700 bg-neutral-900 shadow sm:h-24 sm:w-24">
                             <img
                                 :src="element.url"
                                 :alt="`Image ${element.position}`"

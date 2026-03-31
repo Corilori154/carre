@@ -22,6 +22,7 @@ class PublicGalleryController extends Controller
             'title' => $artwork->title,
             'background_color' => $artwork->background_color,
             'generated_count' => $artwork->generated_count,
+            'created_at' => $artwork->created_at?->format('d.m.Y'),
             'images' => $artwork->images->map(function ($image) {
                 return [
                     'id' => $image->id,

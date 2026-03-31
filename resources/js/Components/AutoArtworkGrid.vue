@@ -531,10 +531,29 @@ onBeforeUnmount(() => {
                     </div>
                 </div>
 
+               
+            </div>
+
+            <div
+                v-if="allowVideoDownload && !isFullscreenActive"
+                class="mt-6 flex justify-center"
+            >
                 <button
+                    type="button"
+                    class="rounded-xl bg-white px-6 py-3 font-semibold text-black transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="isRecording"
+                    @click="downloadAnimationVideo"
+                >
+                    <span v-if="isRecording">Enregistrement vidéo…</span>
+                    <span v-else>Télécharger l’animation en vidéo</span>
+                </button>
+            </div>
+             <button
                     v-if="showFullscreenButton"
                     type="button"
-                    class="absolute bottom-3 right-3 z-10 flex h-11 w-11 items-center justify-center border border-neutral-700 bg-black/70 text-white backdrop-blur-sm transition hover:bg-black/85"
+                   :class="isFullscreenActive
+                        ? 'fixed right-6 bottom-6 z-50'
+                        : 'mt-4 w-full flex justify-end'"
                     :aria-label="isFullscreenActive ? 'Quitter le plein écran' : 'Passer en plein écran'"
                     :title="isFullscreenActive ? 'Quitter le plein écran' : 'Passer en plein écran'"
                     @click="emit('fullscreen')"
@@ -573,22 +592,6 @@ onBeforeUnmount(() => {
                         <path d="M16 16l5 5" />
                     </svg>
                 </button>
-            </div>
-
-            <div
-                v-if="allowVideoDownload && !isFullscreenActive"
-                class="mt-6 flex justify-center"
-            >
-                <button
-                    type="button"
-                    class="rounded-xl bg-white px-6 py-3 font-semibold text-black transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
-                    :disabled="isRecording"
-                    @click="downloadAnimationVideo"
-                >
-                    <span v-if="isRecording">Enregistrement vidéo…</span>
-                    <span v-else>Télécharger l’animation en vidéo</span>
-                </button>
-            </div>
         </div>
     </div>
 </template>

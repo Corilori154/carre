@@ -123,7 +123,12 @@ onBeforeUnmount(() => {
                     v-if="!isFullscreen"
                     class="mb-4 text-center"
                 >
-                    <h2 class="text-xl font-semibold text-white md:text-2xl">
+                    
+                <h2 class="text-xl font-semibold text-white md:text-2xl">
+                        série carré magique
+                    </h2>
+                    
+                <h2 class="text-xl font-semibold text-white md:text-2xl">
                         {{ selectedArtwork.title }}
                     </h2>
 
@@ -135,6 +140,12 @@ onBeforeUnmount(() => {
                         Nombre de tableaux générés depuis sa création :
                         <span class="font-semibold text-white">
                             {{ liveGeneratedCount }}
+                        </span>
+                    </p>
+                    <p class="mt-2 text-sm text-neutral-300">
+                        Date de création :
+                        <span class="font-semibold text-white">
+                            {{ selectedArtwork.created_at }}
                         </span>
                     </p>
                 </div>
