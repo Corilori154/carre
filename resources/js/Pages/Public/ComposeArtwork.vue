@@ -24,9 +24,15 @@ const BOARD_OUTER_SIZE = 80
 const FRAME_SIZE = 7
 const INNER_GAP = 3
 
-const boardPaddingPercent = `5%` // au lieu de 8.75%
+const boardPaddingPercent = `5%`
 const innerSize = BOARD_OUTER_SIZE - (FRAME_SIZE * 2)
 const innerGapPercent = `${(INNER_GAP / innerSize) * 100}%`
+
+const touchState = ref({
+    startX: 0,
+    startY: 0,
+    moved: false,
+})
 
 function makeImageInstance(image) {
     return {
@@ -69,6 +75,32 @@ function rotateImage(slotIndex) {
     if (!slot.length) return
 
     slot[0].rotation = (slot[0].rotation + 90) % 360
+}
+
+function onTouchStart(event) {
+    const touch = event.changedTouches[0]
+
+    touchState.value = {
+        startX: touch.clientX,
+        startY: touch.clientY,
+        moved: false,
+    }
+}
+
+function onTouchMove(event) {
+    const touch = event.changedTouches[0]
+    const deltaX = Math.abs(touch.clientX - touchState.value.startX)
+    const deltaY = Math.abs(touch.clientY - touchState.value.startY)
+
+    if (deltaX > 10 || deltaY > 10) {
+        touchState.value.moved = true
+    }
+}
+
+function onTouchEnd(slotIndex) {
+    if (!touchState.value.moved) {
+        rotateImage(slotIndex)
+    }
 }
 
 async function exportImage() {
@@ -168,11 +200,15 @@ async function exportImage() {
                                     <img
                                         :src="element.url"
                                         :alt="`Image de composition ${index + 1}`"
-                                        class="h-full w-full cursor-pointer object-cover"
+                                        class="h-full w-full cursor-pointer object-cover select-none touch-manipulation"
                                         :style="{
                                             transform: `rotate(${element.rotation}deg)`,
                                         }"
+                                        draggable="false"
                                         @click="rotateImage(index)"
+                                        @touchstart="onTouchStart"
+                                        @touchmove="onTouchMove"
+                                        @touchend.prevent.stop="onTouchEnd(index)"
                                     >
                                 </template>
                             </Draggable>
