@@ -193,6 +193,8 @@ async function exportImage() {
                                 item-key="uid"
                                 :group="{ name: 'board-images', pull: true, put: true }"
                                 :sort="true"
+                                :delay="150"
+                                :delay-on-touch-only="true"
                                 class="h-full w-full"
                                 @change="normalizeSlot(index)"
                             >
