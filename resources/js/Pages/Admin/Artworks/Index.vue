@@ -74,13 +74,22 @@ const destroyArtwork = (id) => {
                         </p>
                     </div>
 
-                    <button
-                        type="button"
-                        @click="destroyArtwork(artwork.id)"
-                        class="rounded border border-red-600 px-3 py-2 text-red-600"
-                    >
-                        Supprimer
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <Link
+                            :href="route('admin.artworks.edit', artwork.id)"
+                            class="rounded border border-gray-300 px-3 py-2 text-gray-700 transition hover:bg-gray-50"
+                        >
+                            Modifier
+                        </Link>
+
+                        <button
+                            type="button"
+                            @click="destroyArtwork(artwork.id)"
+                            class="rounded border border-red-600 px-3 py-2 text-red-600"
+                        >
+                            Supprimer
+                        </button>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-3 gap-1 max-w-[720px]">
@@ -89,7 +98,7 @@ const destroyArtwork = (id) => {
                         :key="image.id"
                         :src="image.url"
                         :alt="`Image ${image.position}`"
-                        class="aspect-square w-full rounded-md object-cover"
+                        class="aspect-square w-full object-cover"
                     />
                 </div>
             </div>

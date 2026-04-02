@@ -43,6 +43,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/artworks', [ArtworkController::class, 'index'])->name('artworks.index');
     Route::get('/artworks/create', [ArtworkController::class, 'create'])->name('artworks.create');
     Route::post('/artworks', [ArtworkController::class, 'store'])->name('artworks.store');
+    Route::get('/artworks/{artwork}/edit', [ArtworkController::class, 'edit'])->name('artworks.edit');
+    Route::put('/artworks/{artwork}', [ArtworkController::class, 'update'])->name('artworks.update');
     Route::delete('/artworks/{artwork}', [ArtworkController::class, 'destroy'])->name('artworks.destroy');
 
     Route::get('/setting-times', [SettingTimeController::class, 'edit'])->name('setting-times.edit');

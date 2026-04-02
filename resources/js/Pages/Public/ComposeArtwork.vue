@@ -24,7 +24,7 @@ const BOARD_OUTER_SIZE = 80
 const FRAME_SIZE = 7
 const INNER_GAP = 3
 
-const boardPaddingPercent = `${(FRAME_SIZE / BOARD_OUTER_SIZE) * 100}%`
+const boardPaddingPercent = `5%` // au lieu de 8.75%
 const innerSize = BOARD_OUTER_SIZE - (FRAME_SIZE * 2)
 const innerGapPercent = `${(INNER_GAP / innerSize) * 100}%`
 
