@@ -16,6 +16,10 @@ Route::get('/test', function () {
     return Inertia::render('TestPage');
 });
 
+Route::get('/test2', function () {
+    return Inertia::render('TestPage');
+});
+
 Route::get('/composed-gallery', [PublicComposedGalleryController::class, 'index'])->name('composed-gallery');
 
 Route::get('/', function () {

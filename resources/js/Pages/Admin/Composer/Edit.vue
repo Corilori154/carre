@@ -258,7 +258,7 @@ const submit = () => {
                                 :key="index"
                                 @dragover.prevent
                                 @drop="onDropOnSlot($event, index)"
-                                class="relative aspect-square overflow-hidden rounded-xl border-2 border-dashed border-gray-300 bg-gray-50"
+                                class="relative aspect-square overflow-hidden border-2 border-dashed border-gray-300 bg-gray-50"
                             >
                                 <template v-if="slot.image_id">
                                     <img

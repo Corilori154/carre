@@ -1,6 +1,8 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import AutoArtworkGrid from '@/Components/AutoArtworkGrid.vue'
+import { Head } from '@inertiajs/vue3'
+
 
 const props = defineProps({
     artworks: {
@@ -19,8 +21,11 @@ const fullscreenContainerRef = ref(null)
 const liveGeneratedCount = ref(0)
 
 const selectedArtwork = computed(() => {
-    return props.artworks.find(artwork => artwork.id === selectedArtworkId.value) || null
+    return props.artworks.find(
+        artwork => Number(artwork.id) === Number(selectedArtworkId.value)
+    ) || null
 })
+
 
 function updateLiveGeneratedCount() {
     liveGeneratedCount.value = selectedArtwork.value?.generated_count ?? 0
@@ -65,6 +70,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+    <Head title="Galerie" />
     <div class="min-h-screen bg-neutral-950 text-neutral-100">
         <div
             v-if="!isFullscreen"

@@ -45,6 +45,29 @@ const MOVE_STEP_MS = 550
 const MOVE_EASING = 'cubic-bezier(.2,.8,.2,1)'
 const ROTATE_EASING = 'cubic-bezier(.22,1,.36,1)'
 
+const BOARD_OUTER_SIZE = 80
+const FRAME_SIZE = 7
+const INNER_GAP = 3
+const TILE_SIZE = 20
+
+const FRAME_PERCENT = (FRAME_SIZE / BOARD_OUTER_SIZE) * 100
+const INNER_SIZE = BOARD_OUTER_SIZE - (FRAME_SIZE * 2)
+const GAP_PERCENT = (INNER_GAP / INNER_SIZE) * 100
+const TILE_PERCENT = (TILE_SIZE / INNER_SIZE) * 100
+
+const innerStyle = {
+    padding: `${FRAME_PERCENT}%`,
+}
+
+const gridStyle = {
+    display: 'grid',
+    width: '100%',
+    height: '100%',
+    gridTemplateColumns: `repeat(3, ${TILE_PERCENT}%)`,
+    gridTemplateRows: `repeat(3, ${TILE_PERCENT}%)`,
+    gap: `${GAP_PERCENT}%`,
+}
+
 const boardContainerRef = ref(null)
 const gridRef = ref(null)
 const tiles = ref([])
@@ -502,43 +525,42 @@ onBeforeUnmount(() => {
             <div
                 ref="boardContainerRef"
                 class="relative mx-auto aspect-square w-full max-w-[680px] shadow-2xl"
-                :style="{ backgroundColor: backgroundColor, padding: '8.75%' }"
+                :style="{ backgroundColor: backgroundColor }"
                 :class="props.isFullscreenActive ? 'max-w-[min(88vw,88vh)]' : ''"
             >
-                <div
-                    ref="gridRef"
-                    class="grid h-full w-full grid-cols-3"
-                    style="gap: 4.5454545455%;"
-                >
+                <div class="absolute inset-0" :style="innerStyle">
                     <div
-                        v-for="tile in tiles"
-                        :key="tile.id"
-                        :data-tile-id="tile.id"
-                        class="relative aspect-square overflow-hidden bg-neutral-900 shadow"
-                        style="will-change: transform; transform-origin: center;"
+                        ref="gridRef"
+                        :style="gridStyle"
                     >
-                        <img
-                            :src="tile.url"
-                            :alt="`Image ${tile.position}`"
-                            class="h-full w-full object-cover"
-                            :style="{
-                                transform: `rotate(${tile.rotation}deg)`,
-                                transition: `transform ${ROTATE_STEP_MS}ms ${ROTATE_EASING}`,
-                                willChange: 'transform',
-                                transformOrigin: 'center',
-                            }"
-                        />
+                        <div
+                            v-for="tile in tiles"
+                            :key="tile.id"
+                            :data-tile-id="tile.id"
+                            class="relative aspect-square overflow-hidden bg-neutral-900 shadow"
+                            style="will-change: transform; transform-origin: center;"
+                        >
+                            <img
+                                :src="tile.url"
+                                :alt="`Image ${tile.position}`"
+                                class="h-full w-full object-cover"
+                                :style="{
+                                    transform: `rotate(${tile.rotation}deg)`,
+                                    transition: `transform ${ROTATE_STEP_MS}ms ${ROTATE_EASING}`,
+                                    willChange: 'transform',
+                                    transformOrigin: 'center',
+                                }"
+                            />
+                        </div>
                     </div>
                 </div>
-
-               
             </div>
 
             <div
                 v-if="allowVideoDownload && !isFullscreenActive"
                 class="mt-6 flex justify-center"
             >
-                <button
+                <!--<button
                     type="button"
                     class="rounded-xl bg-white px-6 py-3 font-semibold text-black transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
                     :disabled="isRecording"
@@ -546,52 +568,53 @@ onBeforeUnmount(() => {
                 >
                     <span v-if="isRecording">Enregistrement vidéo…</span>
                     <span v-else>Télécharger l’animation en vidéo</span>
-                </button>
+                </button>-->
             </div>
-             <button
-                    v-if="showFullscreenButton"
-                    type="button"
-                   :class="isFullscreenActive
-                        ? 'fixed right-6 bottom-6 z-50'
-                        : 'mt-4 w-full flex justify-end'"
-                    :aria-label="isFullscreenActive ? 'Quitter le plein écran' : 'Passer en plein écran'"
-                    :title="isFullscreenActive ? 'Quitter le plein écran' : 'Passer en plein écran'"
-                    @click="emit('fullscreen')"
-                >
-                    <svg
-                        v-if="!isFullscreenActive"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        class="h-5 w-5"
-                    >
-                        <path d="M8 3H3v5" />
-                        <path d="M16 3h5v5" />
-                        <path d="M21 16v5h-5" />
-                        <path d="M3 16v5h5" />
-                    </svg>
 
-                    <svg
-                        v-else
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.8"
-                        class="h-5 w-5"
-                    >
-                        <path d="M9 3H3v6" />
-                        <path d="M15 3h6v6" />
-                        <path d="M21 15v6h-6" />
-                        <path d="M3 15v6h6" />
-                        <path d="M8 8L3 3" />
-                        <path d="M16 8l5-5" />
-                        <path d="M8 16l-5 5" />
-                        <path d="M16 16l5 5" />
-                    </svg>
-                </button>
+            <button
+                v-if="showFullscreenButton"
+                type="button"
+                :class="isFullscreenActive
+                    ? 'fixed right-6 bottom-6 z-50'
+                    : 'mt-4 w-full flex justify-end'"
+                :aria-label="isFullscreenActive ? 'Quitter le plein écran' : 'Passer en plein écran'"
+                :title="isFullscreenActive ? 'Quitter le plein écran' : 'Passer en plein écran'"
+                @click="emit('fullscreen')"
+            >
+                <svg
+                    v-if="!isFullscreenActive"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    class="h-5 w-5"
+                >
+                    <path d="M8 3H3v5" />
+                    <path d="M16 3h5v5" />
+                    <path d="M21 16v5h-5" />
+                    <path d="M3 16v5h5" />
+                </svg>
+
+                <svg
+                    v-else
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    class="h-5 w-5"
+                >
+                    <path d="M9 3H3v6" />
+                    <path d="M15 3h6v6" />
+                    <path d="M21 15v6h-6" />
+                    <path d="M3 15v6h6" />
+                    <path d="M8 8L3 3" />
+                    <path d="M16 8l5-5" />
+                    <path d="M8 16l-5 5" />
+                    <path d="M16 16l5 5" />
+                </svg>
+            </button>
         </div>
     </div>
 </template>

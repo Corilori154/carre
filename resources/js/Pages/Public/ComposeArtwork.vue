@@ -1,7 +1,8 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import Draggable from 'vuedraggable'
 import { toPng } from 'html-to-image'
+import { Head } from '@inertiajs/vue3'
 
 const props = defineProps({
     artworks: {
@@ -23,15 +24,47 @@ const boardRef = ref(null)
 const BOARD_OUTER_SIZE = 80
 const FRAME_SIZE = 7
 const INNER_GAP = 3
+const TILE_SIZE = 20
 
-const boardPaddingPercent = `5%`
-const innerSize = BOARD_OUTER_SIZE - (FRAME_SIZE * 2)
-const innerGapPercent = `${(INNER_GAP / innerSize) * 100}%`
+const FRAME_PERCENT = (FRAME_SIZE / BOARD_OUTER_SIZE) * 100
+const INNER_SIZE = BOARD_OUTER_SIZE - (FRAME_SIZE * 2)
+const GAP_PERCENT = (INNER_GAP / INNER_SIZE) * 100
+const TILE_PERCENT = (TILE_SIZE / INNER_SIZE) * 100
+
+const innerStyle = {
+    padding: `${FRAME_PERCENT}%`,
+    boxSizing: 'border-box',
+    overflow: 'hidden',
+}
+
+const gridStyle = {
+    display: 'grid',
+    width: 'calc(100% + 1px)',
+    height: '100%',
+    gridTemplateColumns: `repeat(3, ${TILE_PERCENT}%)`,
+    gridTemplateRows: `repeat(3, ${TILE_PERCENT}%)`,
+    gap: `${GAP_PERCENT}%`,
+    marginRight: '-1px',
+}
 
 const touchState = ref({
     startX: 0,
     startY: 0,
     moved: false,
+})
+
+function updatePageTitle() {
+    if (selectedArtwork.value) {
+        document.title = `Composition - ${selectedArtwork.value.title}`
+    } else {
+        document.title = 'Composition'
+    }
+}
+
+watch(selectedArtworkId, updatePageTitle)
+
+onMounted(() => {
+    updatePageTitle()
 })
 
 function makeImageInstance(image) {
@@ -128,6 +161,7 @@ async function exportImage() {
 </script>
 
 <template>
+    <Head title="Composition" />
     <div class="min-h-screen bg-neutral-950 text-neutral-100">
         <div class="px-4 py-6 md:px-8 md:py-8">
             <header class="mb-6 text-center">
@@ -172,61 +206,59 @@ async function exportImage() {
             >
                 <div
                     ref="boardRef"
-                    class="relative aspect-square w-full shadow-2xl"
+                    class="relative aspect-square shadow-2xl"
                     :style="{
                         width: 'min(92vw, 92vh, 980px)',
-                        padding: boardPaddingPercent,
                         backgroundColor: selectedArtwork.background_color || '#f5f5f4',
                     }"
                 >
-                    <div
-                        class="grid h-full w-full grid-cols-3"
-                        :style="{ gap: innerGapPercent }"
-                    >
-                        <div
-                            v-for="(slot, index) in boardSlots"
-                            :key="index"
-                            class="relative aspect-square overflow-hidden bg-white"
-                        >
-                            <Draggable
-                                v-model="boardSlots[index]"
-                                item-key="uid"
-                                :group="{ name: 'board-images', pull: true, put: true }"
-                                :sort="true"
-                                :delay="150"
-                                :delay-on-touch-only="true"
-                                class="h-full w-full"
-                                @change="normalizeSlot(index)"
-                            >
-                                <template #item="{ element }">
-                                    <img
-                                        :src="element.url"
-                                        :alt="`Image de composition ${index + 1}`"
-                                        class="h-full w-full cursor-pointer object-cover select-none touch-manipulation"
-                                        :style="{
-                                            transform: `rotate(${element.rotation}deg)`,
-                                        }"
-                                        draggable="false"
-                                        @click="rotateImage(index)"
-                                        @touchstart="onTouchStart"
-                                        @touchmove="onTouchMove"
-                                        @touchend.prevent.stop="onTouchEnd(index)"
-                                    >
-                                </template>
-                            </Draggable>
-
+                    <div class="absolute inset-0" :style="innerStyle">
+                        <div :style="gridStyle">
                             <div
-                                v-if="!slot.length"
-                                class="pointer-events-none absolute inset-0 flex items-center justify-center text-center text-[10px] sm:text-xs text-neutral-600"
+                                v-for="(slot, index) in boardSlots"
+                                :key="index"
+                                class="relative overflow-hidden bg-white aspect-square"
                             >
-                                Déposer
+                                <Draggable
+                                    v-model="boardSlots[index]"
+                                    item-key="uid"
+                                    :group="{ name: 'board-images', pull: true, put: true }"
+                                    :sort="true"
+                                    :delay="1000"
+                                    :delay-on-touch-only="true"
+                                    class="h-full w-full"
+                                    @change="normalizeSlot(index)"
+                                >
+                                    <template #item="{ element }">
+                                        <img
+                                            :src="element.url"
+                                            :alt="`Image de composition ${index + 1}`"
+                                            class="h-full w-full cursor-pointer object-cover select-none touch-manipulation"
+                                            :style="{
+                                                transform: `rotate(${element.rotation}deg)`,
+                                            }"
+                                            draggable="false"
+                                            @click="rotateImage(index)"
+                                            @touchstart="onTouchStart"
+                                            @touchmove="onTouchMove"
+                                            @touchend.prevent.stop="onTouchEnd(index)"
+                                        >
+                                    </template>
+                                </Draggable>
+
+                                <div
+                                    v-if="!slot.length"
+                                    class="pointer-events-none absolute inset-0 flex items-center justify-center text-center text-[10px] sm:text-xs text-neutral-600"
+                                >
+                                    Déposer
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="mb-6 mt-6 flex justify-center">
+           <!--  <div class="mb-6 mt-6 flex justify-center">
                 <button
                     type="button"
                     @click="exportImage"
@@ -234,7 +266,7 @@ async function exportImage() {
                 >
                     Télécharger le tableau en image
                 </button>
-            </div>
+            </div>  -->
 
             <div
                 v-if="selectedArtwork"
@@ -250,6 +282,8 @@ async function exportImage() {
                     :group="{ name: 'board-images', pull: 'clone', put: false }"
                     :sort="false"
                     :clone="cloneImage"
+                    :delay="1000"
+                    :delay-on-touch-only="true"
                     class="flex flex-wrap justify-center gap-3 sm:gap-4"
                 >
                     <template #item="{ element }">
@@ -258,6 +292,7 @@ async function exportImage() {
                                 :src="element.url"
                                 :alt="`Image ${element.position}`"
                                 class="h-full w-full object-cover"
+                                draggable="false"
                             >
                         </div>
                     </template>
