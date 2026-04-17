@@ -224,7 +224,7 @@ async function exportImage() {
                                     item-key="uid"
                                     :group="{ name: 'board-images', pull: true, put: true }"
                                     :sort="true"
-                                    :delay="250"
+                                    :delay="100"
                                     :delay-on-touch-only="true"
                                     class="h-full w-full"
                                     @change="normalizeSlot(index)"
@@ -282,7 +282,7 @@ async function exportImage() {
                     :group="{ name: 'board-images', pull: 'clone', put: false }"
                     :sort="false"
                     :clone="cloneImage"
-                    :delay="250"
+                    :delay="100"
                     :delay-on-touch-only="true"
                     class="flex flex-wrap justify-center gap-3 sm:gap-4"
                 >
