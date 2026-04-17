@@ -19,7 +19,7 @@ class ArtworkController extends Controller
                 'id' => $artwork->id,
                 'title' => $artwork->title,
                 'background_color' => $artwork->background_color,
-                'is_published' => $artwork->is_published,
+                'is_public' => $artwork->is_public,
                 'images' => $artwork->images->map(function ($image) {
                     return [
                         'id' => $image->id,
@@ -47,11 +47,12 @@ class ArtworkController extends Controller
             'images' => ['required', 'array', 'size:9'],
             'images.*' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'background_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'is_public' => ['required', 'boolean'],
         ]);
 
         $artwork = Artwork::create([
             'title' => $validated['title'],
-            'is_published' => false,
+            'is_public' => $validated['is_public'],
             'background_color' => $validated['background_color'],
         ]);
 
@@ -78,6 +79,7 @@ class ArtworkController extends Controller
                 'id' => $artwork->id,
                 'title' => $artwork->title,
                 'background_color' => $artwork->background_color,
+                'is_public' => $artwork->is_public,
                 'images' => $artwork->images->map(function ($image) {
                     return [
                         'id' => $image->id,
@@ -90,46 +92,48 @@ class ArtworkController extends Controller
     }
 
     public function update(Request $request, Artwork $artwork)
-    {
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'images' => ['required', 'array', 'size:9'],
-            'images.*' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-            'background_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-        ]);
+{
+    $validated = $request->validate([
+        'title' => ['required', 'string', 'max:255'],
+        'images' => ['required', 'array', 'size:9'],
+        'images.*' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+        'background_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+        'is_public' => ['required', 'boolean'],
+    ]);
 
-        $artwork->update([
-            'title' => $validated['title'],
-            'background_color' => $validated['background_color'],
-        ]);
+    $artwork->update([
+        'title' => $validated['title'],
+        'background_color' => $validated['background_color'],
+        'is_public' => $validated['is_public'],
+    ]);
 
-        foreach ($validated['images'] as $index => $file) {
-            if (!$file) {
-                continue;
-            }
-
-            $position = $index + 1;
-
-            $existingImage = $artwork->images()->where('position', $position)->first();
-
-            $newPath = $file->store('artworks', 'public');
-
-            if ($existingImage) {
-                Storage::disk('public')->delete($existingImage->image_path);
-
-                $existingImage->update([
-                    'image_path' => $newPath,
-                ]);
-            } else {
-                $artwork->images()->create([
-                    'image_path' => $newPath,
-                    'position' => $position,
-                ]);
-            }
+    foreach ($validated['images'] as $index => $file) {
+        if (! $file) {
+            continue;
         }
 
-        return redirect()->route('admin.artworks.index');
+        $position = $index + 1;
+
+        $existingImage = $artwork->images()->where('position', $position)->first();
+
+        $newPath = $file->store('artworks', 'public');
+
+        if ($existingImage) {
+            Storage::disk('public')->delete($existingImage->image_path);
+
+            $existingImage->update([
+                'image_path' => $newPath,
+            ]);
+        } else {
+            $artwork->images()->create([
+                'image_path' => $newPath,
+                'position' => $position,
+            ]);
+        }
     }
+
+    return redirect()->route('admin.artworks.index');
+}
 
     public function destroy(Artwork $artwork)
     {

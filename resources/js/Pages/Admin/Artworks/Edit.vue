@@ -10,6 +10,7 @@ const props = defineProps({
 const form = useForm({
     title: props.artwork.title ?? '',
     background_color: props.artwork.background_color ?? '#f5f5f4',
+    is_public: props.artwork.is_public ?? false,
     images: Array(9).fill(null),
 })
 
@@ -150,6 +151,24 @@ onBeforeUnmount(() => {
                                 <div v-if="form.errors.background_color" class="mt-2 text-sm text-red-600">
                                     {{ form.errors.background_color }}
                                 </div>
+                            </div>
+
+
+                            <div>
+                                <label class="flex items-center gap-3">
+                                    <input
+                                        v-model="form.is_public"
+                                        type="checkbox"
+                                        class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                    >
+                                    <span class="text-sm font-semibold text-gray-800">
+                                        Rendre ce tableau public
+                                    </span>
+                                </label>
+
+                                <p class="mt-2 text-sm text-gray-500">
+                                    Si activé, ce tableau sera visible dans la page publique de composition.
+                                </p>
                             </div>
 
                             <div>

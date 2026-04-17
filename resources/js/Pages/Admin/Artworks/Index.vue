@@ -262,27 +262,42 @@ async function downloadArtwork() {
                         </h3>
 
                         <div class="mt-4 space-y-4 text-sm text-gray-600">
-                            <div>
-                                <p class="font-medium text-gray-800">Titre</p>
-                                <p>{{ selectedArtwork.title }}</p>
-                            </div>
+                        <div>
+                            <p class="font-medium text-gray-800">Titre</p>
+                            <p>{{ selectedArtwork.title }}</p>
+                        </div>
 
-                            <div>
-                                <p class="font-medium text-gray-800">Couleur de fond</p>
-                                <div class="mt-2 flex items-center gap-3">
-                                    <div
-                                        class="h-10 w-10 rounded-lg border border-gray-300"
-                                        :style="{ backgroundColor: selectedArtwork.background_color || '#f5f5f4' }"
-                                    />
-                                    <span>{{ selectedArtwork.background_color || '#f5f5f4' }}</span>
-                                </div>
-                            </div>
+                        <div>
+                            <p class="font-medium text-gray-800">Visibilité</p>
 
-                            <div>
-                                <p class="font-medium text-gray-800">Images</p>
-                                <p>{{ selectedArtwork.images.length }}/9</p>
+                            <div class="mt-2">
+                                <span
+                                    class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                                    :class="selectedArtwork.is_public
+                                        ? 'bg-green-100 text-green-700'
+                                        : 'bg-gray-200 text-gray-700'"
+                                >
+                                    {{ selectedArtwork.is_public ? 'Public' : 'Privé' }}
+                                </span>
                             </div>
                         </div>
+
+    <div>
+        <p class="font-medium text-gray-800">Couleur de fond</p>
+        <div class="mt-2 flex items-center gap-3">
+            <div
+                class="h-10 w-10 rounded-lg border border-gray-300"
+                :style="{ backgroundColor: selectedArtwork.background_color || '#f5f5f4' }"
+            />
+            <span>{{ selectedArtwork.background_color || '#f5f5f4' }}</span>
+        </div>
+    </div>
+
+    <div>
+        <p class="font-medium text-gray-800">Images</p>
+        <p>{{ selectedArtwork.images.length }}/9</p>
+    </div>
+</div>
                     </div>
                 </div>
             </div>

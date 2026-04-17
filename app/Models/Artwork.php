@@ -8,7 +8,7 @@ class Artwork extends Model
 {
     protected $fillable = [
         'title',
-        'is_published',
+        'is_public',
         'background_color',
     ];
 
