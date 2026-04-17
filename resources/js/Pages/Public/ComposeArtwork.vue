@@ -224,7 +224,7 @@ async function exportImage() {
                                     item-key="uid"
                                     :group="{ name: 'board-images', pull: true, put: true }"
                                     :sort="true"
-                                    :delay="1000"
+                                    :delay="350"
                                     :delay-on-touch-only="true"
                                     class="h-full w-full"
                                     @change="normalizeSlot(index)"
@@ -258,7 +258,7 @@ async function exportImage() {
                 </div>
             </div>
 
-           <!--  <div class="mb-6 mt-6 flex justify-center">
+           <div class="mb-6 mt-6 flex justify-center">
                 <button
                     type="button"
                     @click="exportImage"
@@ -266,7 +266,7 @@ async function exportImage() {
                 >
                     Télécharger le tableau en image
                 </button>
-            </div>  -->
+            </div> 
 
             <div
                 v-if="selectedArtwork"
@@ -282,7 +282,7 @@ async function exportImage() {
                     :group="{ name: 'board-images', pull: 'clone', put: false }"
                     :sort="false"
                     :clone="cloneImage"
-                    :delay="1000"
+                    :delay="350"
                     :delay-on-touch-only="true"
                     class="flex flex-wrap justify-center gap-3 sm:gap-4"
                 >
