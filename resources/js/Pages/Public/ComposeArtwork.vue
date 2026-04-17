@@ -47,24 +47,6 @@ const gridStyle = {
     marginRight: '-1px',
 }
 
-const touchState = ref({
-    startX: 0,
-    startY: 0,
-    moved: false,
-})
-
-const dragState = ref({
-    isDragging: false,
-})
-
-
-function onImagePointerUp(slotIndex, event) {
-    if (event.pointerType === 'mouse') {
-        rotateImage(slotIndex)
-    }
-}
-
-
 function updatePageTitle() {
     if (selectedArtwork.value) {
         document.title = `Composition - ${selectedArtwork.value.title}`
@@ -122,34 +104,6 @@ function rotateImage(slotIndex) {
     slot[0].rotation = (slot[0].rotation + 90) % 360
 }
 
-function onTouchStart(event) {
-    const touch = event.changedTouches[0]
-
-    touchState.value = {
-        startX: touch.clientX,
-        startY: touch.clientY,
-        moved: false,
-    }
-}
-
-function onTouchMove(event) {
-    const touch = event.changedTouches[0]
-    const deltaX = Math.abs(touch.clientX - touchState.value.startX)
-    const deltaY = Math.abs(touch.clientY - touchState.value.startY)
-
-    if (deltaX > 8 || deltaY > 8) {
-        touchState.value.moved = true
-    }
-}
-
-function onTouchEnd(slotIndex) {
-    setTimeout(() => {
-        if (!touchState.value.moved && !dragState.value.isDragging) {
-            rotateImage(slotIndex)
-        }
-    }, 0)
-}
-
 async function exportImage() {
     if (!boardRef.value) return
 
@@ -176,6 +130,7 @@ async function exportImage() {
 
 <template>
     <Head title="Composition" />
+
     <div class="min-h-screen bg-neutral-950 text-neutral-100">
         <div class="px-4 py-6 md:px-8 md:py-8">
             <header class="mb-6 text-center">
@@ -184,7 +139,7 @@ async function exportImage() {
                 </h1>
 
                 <p class="mt-2 text-sm text-neutral-400">
-                    Glissez les images dans le tableau, cliquez dessus pour les tourner, puis exportez votre création.
+                    Glissez les images dans le tableau, tournez-les avec le bouton ↻, puis exportez votre création.
                 </p>
             </header>
 
@@ -231,7 +186,7 @@ async function exportImage() {
                             <div
                                 v-for="(slot, index) in boardSlots"
                                 :key="index"
-                                class="relative overflow-hidden bg-white aspect-square"
+                                class="relative aspect-square overflow-hidden bg-white"
                             >
                                 <Draggable
                                     v-model="boardSlots[index]"
@@ -240,35 +195,44 @@ async function exportImage() {
                                     :sort="true"
                                     :delay="100"
                                     :delay-on-touch-only="true"
+                                    :touch-start-threshold="4"
                                     class="h-full w-full"
+                                    ghost-class="drag-ghost"
+                                    chosen-class="drag-chosen"
+                                    drag-class="drag-dragging"
                                     @change="normalizeSlot(index)"
-                                    @start="dragState.isDragging = true"
-                                    @end="dragState.isDragging = false"
                                 >
                                     <template #item="{ element }">
-                                        <img
-                                            :src="element.url"
-                                            :alt="`Image de composition ${index + 1}`"
-                                            class="h-full w-full cursor-pointer object-cover select-none"
-                                            :style="{
-                                                transform: `rotate(${element.rotation}deg)`,
-                                                WebkitUserSelect: 'none',
-                                                WebkitTouchCallout: 'none',
-                                                userSelect: 'none',
-                                            }"
-                                            draggable="false"
-                                            @contextmenu.prevent
-                                            @pointerup="onImagePointerUp(index, $event)"
-                                            @touchstart.passive="onTouchStart"
-                                            @touchmove.passive="onTouchMove"
-                                            @touchend.prevent.stop="onTouchEnd(index)"
-                                        >
+                                        <div class="relative h-full w-full">
+                                            <img
+                                                :src="element.url"
+                                                :alt="`Image de composition ${index + 1}`"
+                                                class="h-full w-full object-cover select-none"
+                                                :style="{
+                                                    transform: `rotate(${element.rotation}deg)`,
+                                                    WebkitUserSelect: 'none',
+                                                    WebkitTouchCallout: 'none',
+                                                    userSelect: 'none',
+                                                }"
+                                                draggable="false"
+                                                @contextmenu.prevent
+                                            >
+
+                                            <button
+                                                type="button"
+                                                class="absolute bottom-1 right-1 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-black/75 text-lg font-bold text-white shadow-md active:scale-95"
+                                                @click.stop="rotateImage(index)"
+                                                @touchend.prevent.stop="rotateImage(index)"
+                                            >
+                                                ↻
+                                            </button>
+                                        </div>
                                     </template>
                                 </Draggable>
 
                                 <div
                                     v-if="!slot.length"
-                                    class="pointer-events-none absolute inset-0 flex items-center justify-center text-center text-[10px] sm:text-xs text-neutral-600"
+                                    class="pointer-events-none absolute inset-0 flex items-center justify-center text-center text-[10px] text-neutral-600 sm:text-xs"
                                 >
                                     Déposer
                                 </div>
@@ -278,7 +242,7 @@ async function exportImage() {
                 </div>
             </div>
 
-           <div class="mb-6 mt-6 flex justify-center">
+            <div class="mb-6 mt-6 flex justify-center">
                 <button
                     type="button"
                     @click="exportImage"
@@ -286,7 +250,7 @@ async function exportImage() {
                 >
                     Télécharger le tableau en image
                 </button>
-            </div> 
+            </div>
 
             <div
                 v-if="selectedArtwork"
@@ -304,15 +268,25 @@ async function exportImage() {
                     :clone="cloneImage"
                     :delay="100"
                     :delay-on-touch-only="true"
+                    :touch-start-threshold="4"
                     class="flex flex-wrap justify-center gap-3 sm:gap-4"
+                    ghost-class="drag-ghost"
+                    chosen-class="drag-chosen"
+                    drag-class="drag-dragging"
                 >
                     <template #item="{ element }">
                         <div class="h-20 w-20 overflow-hidden border border-neutral-700 bg-neutral-900 shadow sm:h-24 sm:w-24">
                             <img
                                 :src="element.url"
                                 :alt="`Image ${element.position}`"
-                                class="h-full w-full object-cover"
+                                class="h-full w-full object-cover select-none"
+                                :style="{
+                                    WebkitUserSelect: 'none',
+                                    WebkitTouchCallout: 'none',
+                                    userSelect: 'none',
+                                }"
                                 draggable="false"
+                                @contextmenu.prevent
                             >
                         </div>
                     </template>
@@ -340,5 +314,9 @@ async function exportImage() {
 
 .drag-dragging {
     opacity: 0.9;
+}
+
+button {
+    -webkit-touch-callout: none;
 }
 </style>
