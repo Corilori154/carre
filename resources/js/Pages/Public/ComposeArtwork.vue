@@ -53,6 +53,18 @@ const touchState = ref({
     moved: false,
 })
 
+const dragState = ref({
+    isDragging: false,
+})
+
+
+function onImagePointerUp(slotIndex, event) {
+    if (event.pointerType === 'mouse') {
+        rotateImage(slotIndex)
+    }
+}
+
+
 function updatePageTitle() {
     if (selectedArtwork.value) {
         document.title = `Composition - ${selectedArtwork.value.title}`
@@ -125,15 +137,17 @@ function onTouchMove(event) {
     const deltaX = Math.abs(touch.clientX - touchState.value.startX)
     const deltaY = Math.abs(touch.clientY - touchState.value.startY)
 
-    if (deltaX > 10 || deltaY > 10) {
+    if (deltaX > 8 || deltaY > 8) {
         touchState.value.moved = true
     }
 }
 
 function onTouchEnd(slotIndex) {
-    if (!touchState.value.moved) {
-        rotateImage(slotIndex)
-    }
+    setTimeout(() => {
+        if (!touchState.value.moved && !dragState.value.isDragging) {
+            rotateImage(slotIndex)
+        }
+    }, 0)
 }
 
 async function exportImage() {
@@ -228,19 +242,25 @@ async function exportImage() {
                                     :delay-on-touch-only="true"
                                     class="h-full w-full"
                                     @change="normalizeSlot(index)"
+                                    @start="dragState.isDragging = true"
+                                    @end="dragState.isDragging = false"
                                 >
                                     <template #item="{ element }">
                                         <img
                                             :src="element.url"
                                             :alt="`Image de composition ${index + 1}`"
-                                            class="h-full w-full cursor-pointer object-cover select-none touch-manipulation"
+                                            class="h-full w-full cursor-pointer object-cover select-none"
                                             :style="{
                                                 transform: `rotate(${element.rotation}deg)`,
+                                                WebkitUserSelect: 'none',
+                                                WebkitTouchCallout: 'none',
+                                                userSelect: 'none',
                                             }"
                                             draggable="false"
-                                            @click="rotateImage(index)"
-                                            @touchstart="onTouchStart"
-                                            @touchmove="onTouchMove"
+                                            @contextmenu.prevent
+                                            @pointerup="onImagePointerUp(index, $event)"
+                                            @touchstart.passive="onTouchStart"
+                                            @touchmove.passive="onTouchMove"
                                             @touchend.prevent.stop="onTouchEnd(index)"
                                         >
                                     </template>
@@ -308,3 +328,17 @@ async function exportImage() {
         </div>
     </div>
 </template>
+
+<style scoped>
+.drag-ghost {
+    opacity: 0.2;
+}
+
+.drag-chosen {
+    opacity: 1;
+}
+
+.drag-dragging {
+    opacity: 0.9;
+}
+</style>
