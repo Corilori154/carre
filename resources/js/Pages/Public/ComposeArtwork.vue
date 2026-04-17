@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, watch, onMounted, nextTick } from 'vue'
 import Draggable from 'vuedraggable'
 import { toPng } from 'html-to-image'
 import { Head } from '@inertiajs/vue3'
@@ -20,6 +20,7 @@ const selectedArtwork = computed(() => {
 const availableImages = ref([])
 const boardSlots = ref(Array.from({ length: 9 }, () => []))
 const boardRef = ref(null)
+const isExporting = ref(false)
 
 const BOARD_OUTER_SIZE = 80
 const FRAME_SIZE = 7
@@ -104,10 +105,16 @@ function rotateImage(slotIndex) {
     slot[0].rotation = (slot[0].rotation + 90) % 360
 }
 
+
+
 async function exportImage() {
     if (!boardRef.value) return
 
     try {
+        isExporting.value = true
+        boardRef.value.classList.add('exporting-board')
+        await nextTick()
+
         const dataUrl = await toPng(boardRef.value, {
             cacheBust: true,
             pixelRatio: 2,
@@ -124,6 +131,13 @@ async function exportImage() {
     } catch (error) {
         console.error('Erreur export image :', error)
         alert('Export échoué')
+    } finally {
+        if (boardRef.value) {
+            boardRef.value.classList.remove('exporting-board')
+        }
+
+        isExporting.value = false
+        await nextTick()
     }
 }
 </script>
@@ -175,14 +189,14 @@ async function exportImage() {
             >
                 <div
                     ref="boardRef"
-                    class="relative aspect-square shadow-2xl"
+                    class="relative aspect-square overflow-hidden shadow-2xl"
                     :style="{
                         width: 'min(92vw, 92vh, 980px)',
                         backgroundColor: selectedArtwork.background_color || '#f5f5f4',
                     }"
                 >
                     <div class="absolute inset-0" :style="innerStyle">
-                        <div :style="gridStyle">
+                        <div :style="gridStyle" data-export-grid>
                             <div
                                 v-for="(slot, index) in boardSlots"
                                 :key="index"
@@ -205,11 +219,11 @@ async function exportImage() {
                                     @change="normalizeSlot(index)"
                                 >
                                     <template #item="{ element }">
-                                        <div class="relative h-full w-full">
+                                        <div class="relative h-full w-full leading-none">
                                             <img
                                                 :src="element.url"
                                                 :alt="`Image de composition ${index + 1}`"
-                                                class="h-full w-full object-cover select-none"
+                                                class="block h-full w-full object-cover select-none"
                                                 :style="{
                                                     transform: `rotate(${element.rotation}deg)`,
                                                     WebkitUserSelect: 'none',
@@ -221,6 +235,7 @@ async function exportImage() {
                                             >
 
                                             <button
+                                                v-if="!isExporting"
                                                 type="button"
                                                 class="rotate-btn absolute bottom-1 right-1 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-black/75 text-lg font-bold text-white shadow-md active:scale-95"
                                                 @pointerdown.stop
@@ -278,11 +293,11 @@ async function exportImage() {
                     drag-class="drag-dragging"
                 >
                     <template #item="{ element }">
-                        <div class="h-20 w-20 overflow-hidden border border-neutral-700 bg-neutral-900 shadow sm:h-24 sm:w-24">
+                        <div class="h-20 w-20 overflow-hidden border border-neutral-700 bg-neutral-900 shadow sm:h-24 sm:w-24 leading-none">
                             <img
                                 :src="element.url"
                                 :alt="`Image ${element.position}`"
-                                class="h-full w-full object-cover select-none"
+                                class="block h-full w-full object-cover select-none"
                                 :style="{
                                     WebkitUserSelect: 'none',
                                     WebkitTouchCallout: 'none',
@@ -321,5 +336,10 @@ async function exportImage() {
 
 button {
     -webkit-touch-callout: none;
+}
+
+:deep(.exporting-board [data-export-grid]) {
+    width: 100% !important;
+    margin-right: 0 !important;
 }
 </style>
