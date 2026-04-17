@@ -196,6 +196,8 @@ async function exportImage() {
                                     :delay="100"
                                     :delay-on-touch-only="true"
                                     :touch-start-threshold="4"
+                                    filter=".rotate-btn"
+                                    :prevent-on-filter="false"
                                     class="h-full w-full"
                                     ghost-class="drag-ghost"
                                     chosen-class="drag-chosen"
@@ -220,9 +222,11 @@ async function exportImage() {
 
                                             <button
                                                 type="button"
-                                                class="absolute bottom-1 right-1 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-black/75 text-lg font-bold text-white shadow-md active:scale-95"
-                                                @click.stop="rotateImage(index)"
-                                                @touchend.prevent.stop="rotateImage(index)"
+                                                class="rotate-btn absolute bottom-1 right-1 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-black/75 text-lg font-bold text-white shadow-md active:scale-95"
+                                                @pointerdown.stop.prevent
+                                                @mousedown.stop.prevent
+                                                @touchstart.stop.prevent
+                                                @click.stop.prevent="rotateImage(index)"
                                             >
                                                 ↻
                                             </button>
