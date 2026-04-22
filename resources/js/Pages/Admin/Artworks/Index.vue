@@ -56,7 +56,11 @@ async function downloadArtwork() {
 
     try {
         const canvas = document.createElement('canvas')
-        const size = 680
+        const DPI = 300
+        const PRINT_SIZE_CM = 80 // ton tableau fait 80 cm
+        const INCHES = PRINT_SIZE_CM / 2.54
+
+        const size = Math.round(INCHES * DPI)
         const ctx = canvas.getContext('2d')
 
         canvas.width = size
