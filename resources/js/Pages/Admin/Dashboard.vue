@@ -7,10 +7,17 @@ import { Link } from '@inertiajs/vue3'
         <div class="flex items-center justify-between">
             <h1 class="text-2xl font-bold">Dashboard admin</h1>
 
-            <Link
-                :href="route('admin.setting-times.edit')"
-                class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
-            >
+            <div class="flex items-center gap-3">
+                <Link
+                    :href="route('admin.galleries.index')"
+                    class="inline-flex items-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-gray-800"
+                >
+                    Galeries clientes
+                </Link>
+                <Link
+                    :href="route('admin.setting-times.edit')"
+                    class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+                >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     class="h-5 w-5"
@@ -31,7 +38,8 @@ import { Link } from '@inertiajs/vue3'
                     />
                 </svg>
                 Paramètres de temps
-            </Link>
+                </Link>
+            </div>
         </div>
     </div>
 </template>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Artwork extends Model
 {
@@ -15,6 +16,11 @@ class Artwork extends Model
     public function images()
     {
         return $this->hasMany(ArtworkImage::class)->orderBy('position');
+    }
+
+    public function galleries(): BelongsToMany
+    {
+        return $this->belongsToMany(Gallery::class);
     }
 
     public function getGeneratedCountAttribute(): int

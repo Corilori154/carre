@@ -3,11 +3,16 @@ import { computed, ref, watch, onMounted, nextTick } from 'vue'
 import Draggable from 'vuedraggable'
 import { toPng } from 'html-to-image'
 import { Head } from '@inertiajs/vue3'
+import axios from 'axios'
 
 const props = defineProps({
     artworks: {
         type: Array,
         required: true,
+    },
+    gallery: {
+        type: Object,
+        default: null,
     },
 })
 
@@ -21,6 +26,7 @@ const availableImages = ref([])
 const boardSlots = ref(Array.from({ length: 9 }, () => []))
 const boardRef = ref(null)
 const isExporting = ref(false)
+const exportError = ref('')
 
 const BOARD_OUTER_SIZE = 80
 const FRAME_SIZE = 7
@@ -108,10 +114,11 @@ function rotateImage(slotIndex) {
 
 
 async function exportImage() {
-    if (!boardRef.value) return
+    if (!boardRef.value || !selectedArtwork.value) return
 
     try {
         isExporting.value = true
+        exportError.value = ''
         boardRef.value.classList.add('exporting-board')
         await nextTick()
 
@@ -122,6 +129,18 @@ async function exportImage() {
             backgroundColor: selectedArtwork.value?.background_color || '#f5f5f4',
         })
 
+        const claimRoute = props.gallery
+            ? route('galleries.generated-compositions.store', props.gallery.slug)
+            : route('generated-compositions.store')
+
+        await axios.post(claimRoute, {
+            artwork_id: selectedArtwork.value.id,
+            slots: boardSlots.value.map(slot => slot.length ? {
+                image_id: slot[0].id,
+                rotation: slot[0].rotation,
+            } : null),
+        })
+
         const link = document.createElement('a')
         link.href = dataUrl
         link.download = 'tableau-compose.png'
@@ -130,7 +149,8 @@ async function exportImage() {
         document.body.removeChild(link)
     } catch (error) {
         console.error('Erreur export image :', error)
-        alert('Export échoué')
+        exportError.value = error.response?.data?.message
+            || 'Le téléchargement a échoué. Veuillez réessayer.'
     } finally {
         if (boardRef.value) {
             boardRef.value.classList.remove('exporting-board')
@@ -143,7 +163,7 @@ async function exportImage() {
 </script>
 
 <template>
-    <Head title="Composition" />
+    <Head :title="gallery ? `Composition - ${gallery.name}` : 'Composition'" />
 
     <div class="min-h-screen bg-neutral-950 text-neutral-100">
         <div class="px-4 py-6 md:px-8 md:py-8">
@@ -151,6 +171,7 @@ async function exportImage() {
                 <h1 class="text-3xl font-bold md:text-4xl">
                     Composer votre tableau
                 </h1>
+                <p v-if="gallery" class="mt-2 text-sm text-gray-500">{{ gallery.name }}</p>
 
                 <p class="mt-2 text-sm text-neutral-400">
                     Glissez les images dans le tableau, tournez-les avec le bouton ↻, puis exportez votre création.
@@ -264,10 +285,15 @@ async function exportImage() {
                 <button
                     type="button"
                     @click="exportImage"
-                    class="rounded-xl bg-white px-6 py-3 font-semibold text-black transition hover:bg-neutral-200"
+                    :disabled="isExporting"
+                    class="rounded-xl bg-white px-6 py-3 font-semibold text-black transition hover:bg-neutral-200 disabled:cursor-wait disabled:opacity-60"
                 >
-                    Télécharger le tableau en image
+                    {{ isExporting ? 'Vérification…' : 'Télécharger le tableau en image' }}
                 </button>
+            </div>
+
+            <div v-if="exportError" class="mx-auto mb-6 max-w-2xl rounded-lg border border-red-800 bg-red-950/50 p-4 text-center text-sm text-red-200">
+                {{ exportError }}
             </div>
 
             <div

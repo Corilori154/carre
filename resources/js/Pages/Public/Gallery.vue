@@ -13,6 +13,10 @@ const props = defineProps({
         type: Number,
         default: 10,
     },
+    gallery: {
+        type: Object,
+        default: null,
+    },
 })
 
 const selectedArtworkId = ref(props.artworks.length ? props.artworks[0].id : null)
@@ -70,14 +74,14 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <Head title="Galerie" />
+    <Head :title="gallery ? `Galerie - ${gallery.name}` : 'Galerie'" />
     <div class="min-h-screen bg-neutral-950 text-neutral-100">
         <div
             v-if="!isFullscreen"
             class="mx-auto max-w-5xl px-4 py-6 md:px-6 md:py-8"
         >
             <header class="mb-6">
-                <h1 class="text-2xl font-bold md:text-3xl">Galerie</h1>
+                <h1 class="text-2xl font-bold md:text-3xl">{{ gallery?.name || 'Galerie' }}</h1>
                 <p class="mt-2 max-w-2xl text-sm text-neutral-400">
                     Sélectionnez un tableau pour découvrir sa grille animée.
                 </p>

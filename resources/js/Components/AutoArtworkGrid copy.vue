@@ -130,42 +130,46 @@ async function rotateOneByOne(items) {
     }
 }
 
-async function moveOneByOne(moveItems, finalOrder) {
+async function moveOneByOne(moveItems, newOrder) {
     if (!moveItems.length) {
-        tiles.value = finalOrder
+        tiles.value = newOrder
         await nextTick()
         return
     }
 
-    const workingOrder = tiles.value.slice()
+    const firstRects = new Map()
 
-    for (let targetIndex = 0; targetIndex < finalOrder.length; targetIndex++) {
-        const expectedId = finalOrder[targetIndex].id
-        const currentIndex = workingOrder.findIndex(item => item.id === expectedId)
+    moveItems.forEach(item => {
+        const el = getTileElement(item.id)
+        if (!el) return
+        firstRects.set(item.id, el.getBoundingClientRect())
+    })
 
-        if (currentIndex === -1 || currentIndex === targetIndex) {
-            continue
-        }
+    tiles.value = newOrder
+    await nextTick()
 
-        const movingId = expectedId
-        const movingEl = getTileElement(movingId)
+    const lastRects = new Map()
 
-        if (!movingEl) {
-            const [movedItem] = workingOrder.splice(currentIndex, 1)
-            workingOrder.splice(targetIndex, 0, movedItem)
-            tiles.value = workingOrder.slice()
-            await nextTick()
-            continue
-        }
+    moveItems.forEach(item => {
+        const el = getTileElement(item.id)
+        if (!el) return
+        lastRects.set(item.id, el.getBoundingClientRect())
+    })
 
-        const firstRect = movingEl.getBoundingClientRect()
-        const clone = movingEl.cloneNode(true)
+    for (const item of moveItems) {
+        const realEl = getTileElement(item.id)
+        const first = firstRects.get(item.id)
+        const last = lastRects.get(item.id)
+
+        if (!realEl || !first || !last) continue
+
+        const clone = realEl.cloneNode(true)
 
         clone.style.position = 'fixed'
-        clone.style.left = `${firstRect.left}px`
-        clone.style.top = `${firstRect.top}px`
-        clone.style.width = `${firstRect.width}px`
-        clone.style.height = `${firstRect.height}px`
+        clone.style.left = `${first.left}px`
+        clone.style.top = `${first.top}px`
+        clone.style.width = `${first.width}px`
+        clone.style.height = `${first.height}px`
         clone.style.margin = '0'
         clone.style.zIndex = '9999'
         clone.style.pointerEvents = 'none'
@@ -175,24 +179,10 @@ async function moveOneByOne(moveItems, finalOrder) {
 
         getAnimationHost().appendChild(clone)
 
-        const [movedItem] = workingOrder.splice(currentIndex, 1)
-        workingOrder.splice(targetIndex, 0, movedItem)
+        realEl.style.visibility = 'hidden'
 
-        tiles.value = workingOrder.slice()
-        await nextTick()
-
-        const realElAfterMove = getTileElement(movingId)
-
-        if (!realElAfterMove) {
-            clone.remove()
-            continue
-        }
-
-        const lastRect = realElAfterMove.getBoundingClientRect()
-        const dx = lastRect.left - firstRect.left
-        const dy = lastRect.top - firstRect.top
-
-        realElAfterMove.style.opacity = '0'
+        const dx = last.left - first.left
+        const dy = last.top - first.top
 
         clone.getBoundingClientRect()
         clone.style.transform = `translate(${dx}px, ${dy}px)`
@@ -200,11 +190,8 @@ async function moveOneByOne(moveItems, finalOrder) {
         await sleep(MOVE_STEP_MS + 70)
 
         clone.remove()
-        realElAfterMove.style.opacity = ''
+        realEl.style.visibility = ''
     }
-
-    tiles.value = finalOrder.slice()
-    await nextTick()
 }
 
 function buildShufflePlan() {

@@ -3,15 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\Artwork;
+use App\Models\Gallery;
 use App\Models\SettingTime;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 
 class PublicGalleryController extends Controller
 {
-    public function index()
+    public function index(?Gallery $gallery = null)
     {
-        $artworks = Artwork::with(['images' => function ($query) {
+        $artworksQuery = Artwork::query();
+
+        if ($gallery) {
+            $artworksQuery->whereHas('galleries', fn ($query) => $query->whereKey($gallery->id));
+        }
+
+        $artworks = $artworksQuery->with(['images' => function ($query) {
             $query->orderBy('position');
         }])
         ->latest()
@@ -35,6 +42,7 @@ class PublicGalleryController extends Controller
 
         return Inertia::render('Public/Gallery', [
             'artworks' => $artworks,
+            'gallery' => $gallery?->only('name', 'slug'),
             'shuffleIntervalSeconds' => (int) SettingTime::getValue('shuffle_interval_seconds', 10),
         ]);
     }

@@ -141,6 +141,13 @@ async function downloadArtwork() {
             </Link>
 
             <Link
+                :href="route('admin.galleries.index')"
+                class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+            >
+                Galeries clientes
+            </Link>
+
+            <Link
                 :href="route('admin.setting-times.edit')"
                 class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-gray-800"
             >

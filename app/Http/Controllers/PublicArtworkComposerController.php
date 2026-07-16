@@ -3,14 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\Artwork;
+use App\Models\Gallery;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class PublicArtworkComposerController extends Controller
 {
-    public function index()
+    public function index(?Gallery $gallery = null)
     {
-        $artworks = Artwork::where('is_public', true)
+        if ($gallery) {
+            $artworksQuery = Artwork::whereHas(
+                'galleries',
+                fn ($query) => $query->whereKey($gallery->id),
+            );
+        } else {
+            $artworksQuery = Artwork::where('is_public', true);
+        }
+
+        $artworks = $artworksQuery
             ->with(['images' => function ($query) {
                 $query->orderBy('position');
             }])
@@ -34,6 +44,7 @@ class PublicArtworkComposerController extends Controller
 
         return Inertia::render('Public/ComposeArtwork', [
             'artworks' => $artworks,
+            'gallery' => $gallery?->only('name', 'slug'),
         ]);
     }
 }
