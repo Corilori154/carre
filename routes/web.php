@@ -66,6 +66,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/galleries', [GalleryController::class, 'index'])->name('galleries.index');
     Route::post('/galleries', [GalleryController::class, 'store'])->name('galleries.store');
     Route::get('/galleries/{gallery}/edit', [GalleryController::class, 'edit'])->name('galleries.edit');
+    Route::patch('/galleries/{gallery}', [GalleryController::class, 'update'])->name('galleries.update');
     Route::put('/galleries/{gallery}/artworks', [GalleryController::class, 'updateArtworks'])->name('galleries.artworks.update');
     Route::delete('/galleries/{gallery}', [GalleryController::class, 'destroy'])->name('galleries.destroy');
     Route::put('/galleries/{gallery}/access', [GalleryController::class, 'resetAccess'])->name('galleries.access.reset');

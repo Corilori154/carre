@@ -21,6 +21,7 @@ class GalleryManagementTest extends TestCase
             'name' => 'Galerie du Lac',
             'email' => 'contact@galerie-du-lac.test',
             'password' => 'secret-galerie',
+            'validity_days' => 30,
         ]);
 
         $response->assertRedirect(route('admin.galleries.index'));
@@ -31,6 +32,7 @@ class GalleryManagementTest extends TestCase
         ]);
 
         $gallery = Gallery::firstOrFail();
+        $this->assertTrue($gallery->access_password_expires_at->isFuture());
 
         $this->actingAs(User::factory()->create())
             ->get(route('admin.galleries.index'))
@@ -48,6 +50,31 @@ class GalleryManagementTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->post(route('admin.galleries.store'), ['name' => 'Deuxième', 'slug' => 'meme-lien'])
             ->assertSessionHasErrors('slug');
+    }
+
+    public function test_an_authenticated_user_can_update_gallery_information(): void
+    {
+        $gallery = Gallery::create([
+            'name' => 'Ancien nom',
+            'slug' => 'ancien-nom',
+            'email' => 'ancien@example.test',
+            'access_password_expires_at' => now()->addDay(),
+        ]);
+
+        $this->actingAs(User::factory()->create())
+            ->patch(route('admin.galleries.update', $gallery), [
+                'name' => 'Nouveau nom',
+                'email' => 'nouveau@example.test',
+                'validity_days' => 45,
+            ])
+            ->assertRedirect(route('admin.galleries.index'));
+
+        $gallery->refresh();
+
+        $this->assertSame('Nouveau nom', $gallery->name);
+        $this->assertSame('nouveau@example.test', $gallery->email);
+        $this->assertTrue($gallery->access_password_expires_at->isAfter(now()->addDays(44)));
+        $this->assertSame('ancien-nom', $gallery->slug);
     }
 
     public function test_the_password_can_only_claim_one_device(): void
@@ -75,6 +102,22 @@ class GalleryManagementTest extends TestCase
         $this->post(route('galleries.access.store', $gallery), [
             'password' => 'mot-de-passe-secret',
         ])->assertSessionHasErrors('password');
+    }
+
+    public function test_an_expired_gallery_password_cannot_be_used(): void
+    {
+        $gallery = Gallery::create([
+            'name' => 'Galerie expirée',
+            'slug' => 'galerie-expiree',
+            'access_password' => 'mot-de-passe-secret',
+            'access_password_expires_at' => now()->subDay(),
+        ]);
+
+        $this->post(route('galleries.access.store', $gallery), [
+            'password' => 'mot-de-passe-secret',
+        ])->assertSessionHasErrors('password');
+
+        $this->assertNull($gallery->refresh()->claimed_at);
     }
 
     public function test_each_gallery_has_its_own_public_pages(): void

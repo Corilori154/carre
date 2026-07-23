@@ -61,24 +61,75 @@ const submit = () => form.put(route('admin.galleries.artworks.update', props.gal
                 Aucun tableau n’a encore été créé.
             </div>
 
-            <div v-else class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
                 <label
                     v-for="artwork in artworks"
                     :key="artwork.id"
-                    class="flex cursor-pointer items-center gap-4 border-b border-gray-100 px-5 py-4 last:border-b-0 hover:bg-gray-50"
+                    class="group relative cursor-pointer overflow-hidden rounded-xl border-2 bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg"
+                    :class="isSelected(artwork.id)
+                        ? 'selected-artwork -translate-y-0.5 scale-[1.02] border-emerald-500 shadow-lg shadow-emerald-100'
+                        : 'border-gray-200 hover:border-gray-300'"
                 >
                     <input
                         type="checkbox"
                         :checked="isSelected(artwork.id)"
-                        class="h-5 w-5 rounded border-gray-300 text-gray-900 focus:ring-gray-700"
+                        class="peer sr-only"
                         @change="toggle(artwork.id)"
                     />
-                    <div class="min-w-0 flex-1">
-                        <p class="font-medium text-gray-900">{{ artwork.title }}</p>
-                        <p class="text-xs text-gray-500">{{ artwork.is_public ? 'Public' : 'Privé' }}</p>
+
+                    <div
+                        class="grid aspect-square grid-cols-3 grid-rows-3 gap-1 p-2 transition duration-300 group-hover:brightness-95"
+                        :style="{ backgroundColor: artwork.background_color || '#f5f5f4' }"
+                    >
+                        <div
+                            v-for="image in artwork.images"
+                            :key="image.id"
+                            class="min-h-0 min-w-0 overflow-hidden"
+                        >
+                            <img
+                                :src="image.url"
+                                :alt="`Aperçu de ${artwork.title}`"
+                                class="h-full w-full object-cover"
+                            />
+                        </div>
+                    </div>
+
+                    <div
+                        class="absolute right-3 top-3 flex h-7 w-7 scale-75 items-center justify-center rounded-full bg-emerald-500 text-white opacity-0 shadow-md transition-all duration-300"
+                        :class="isSelected(artwork.id) ? 'scale-100 opacity-100' : ''"
+                        aria-hidden="true"
+                    >
+                        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none">
+                            <path d="m5 10 3 3 7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+
+                    <div
+                        class="border-t border-gray-100 px-3 py-3 text-center transition-colors duration-300"
+                        :class="isSelected(artwork.id) ? 'bg-emerald-50' : 'bg-white'"
+                    >
+                        <p class="truncate text-sm font-semibold text-gray-900" :title="artwork.title">{{ artwork.title }}</p>
                     </div>
                 </label>
             </div>
         </form>
     </AuthenticatedLayout>
 </template>
+
+<style scoped>
+@keyframes selected-pop {
+    0% { transform: scale(1); }
+    45% { transform: scale(1.045); }
+    100% { transform: scale(1.02) translateY(-0.125rem); }
+}
+
+.selected-artwork {
+    animation: selected-pop 320ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .selected-artwork {
+        animation: none;
+    }
+}
+</style>

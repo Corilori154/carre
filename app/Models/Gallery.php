@@ -15,6 +15,7 @@ class Gallery extends Model
         'slug',
         'email',
         'access_password',
+        'access_password_expires_at',
         'device_token_hash',
         'claimed_at',
     ];
@@ -28,6 +29,7 @@ class Gallery extends Model
     {
         return [
             'access_password' => 'hashed',
+            'access_password_expires_at' => 'datetime',
             'claimed_at' => 'datetime',
         ];
     }

@@ -19,6 +19,7 @@ class GalleryAccessController extends Controller
             'redirect' => $this->safeRedirect($request, $gallery),
             'isClaimed' => (bool) $gallery->claimed_at,
             'isConfigured' => (bool) $gallery->access_password,
+            'isExpired' => $gallery->access_password_expires_at?->isPast() ?? false,
         ]);
     }
 
@@ -37,6 +38,10 @@ class GalleryAccessController extends Controller
                 return false;
             }
 
+            if ($lockedGallery->access_password_expires_at?->isPast()) {
+                return 'expired';
+            }
+
             if (! Hash::check($validated['password'], $lockedGallery->access_password)) {
                 return null;
             }
@@ -51,6 +56,10 @@ class GalleryAccessController extends Controller
 
         if ($claimed === null) {
             return back()->withErrors(['password' => 'Le mot de passe est incorrect.']);
+        }
+
+        if ($claimed === 'expired') {
+            return back()->withErrors(['password' => 'Ce mot de passe a expiré. Demandez-en un nouveau.']);
         }
 
         if ($claimed === false) {
