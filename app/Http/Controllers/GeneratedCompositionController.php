@@ -15,6 +15,9 @@ class GeneratedCompositionController extends Controller
     public function store(Request $request, ?Gallery $gallery = null): JsonResponse
     {
         $validated = $request->validate([
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255'],
             'artwork_id' => ['required', 'integer', Rule::exists('artworks', 'id')],
             'slots' => ['required', 'array', 'size:9'],
             'slots.*' => ['nullable', 'array'],
@@ -54,6 +57,10 @@ class GeneratedCompositionController extends Controller
         try {
             GeneratedComposition::create([
                 'artwork_id' => $artwork->id,
+                'gallery_id' => $gallery?->id,
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                'email' => $validated['email'],
                 'fingerprint' => $fingerprint,
                 'composition' => $composition,
             ]);

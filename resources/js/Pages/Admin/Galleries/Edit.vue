@@ -1,14 +1,16 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import { Head, Link, useForm } from '@inertiajs/vue3'
+import { Head, Link, router, useForm } from '@inertiajs/vue3'
 
 const props = defineProps({
     gallery: Object,
-    artworks: Array,
+    artworks: Object,
 })
 
 const form = useForm({
-    artwork_ids: props.artworks.filter(artwork => artwork.selected).map(artwork => artwork.id),
+    artwork_ids: props.artworks.data.filter(artwork => artwork.selected).map(artwork => artwork.id),
+    visible_artwork_ids: props.artworks.data.map(artwork => artwork.id),
+    page: props.artworks.current_page,
 })
 
 const isSelected = id => form.artwork_ids.includes(id)
@@ -22,6 +24,15 @@ const toggle = id => {
 const submit = () => form.put(route('admin.galleries.artworks.update', props.gallery.slug), {
     preserveScroll: true,
 })
+
+const changePage = url => {
+    if (!url || form.processing) return
+
+    form.put(route('admin.galleries.artworks.update', props.gallery.slug), {
+        preserveScroll: true,
+        onSuccess: () => router.get(url),
+    })
+}
 </script>
 
 <template>
@@ -57,13 +68,13 @@ const submit = () => form.put(route('admin.galleries.artworks.update', props.gal
 
             <p v-if="form.errors.artwork_ids" class="mb-4 text-sm text-red-600">{{ form.errors.artwork_ids }}</p>
 
-            <div v-if="!artworks.length" class="rounded-xl border border-dashed p-8 text-center text-gray-500">
+            <div v-if="!artworks.data.length" class="rounded-xl border border-dashed p-8 text-center text-gray-500">
                 Aucun tableau n’a encore été créé.
             </div>
 
             <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
                 <label
-                    v-for="artwork in artworks"
+                    v-for="artwork in artworks.data"
                     :key="artwork.id"
                     class="group relative cursor-pointer overflow-hidden rounded-xl border-2 bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg"
                     :class="isSelected(artwork.id)
@@ -89,6 +100,8 @@ const submit = () => form.put(route('admin.galleries.artworks.update', props.gal
                             <img
                                 :src="image.url"
                                 :alt="`Aperçu de ${artwork.title}`"
+                                loading="lazy"
+                                decoding="async"
                                 class="h-full w-full object-cover"
                             />
                         </div>
@@ -111,6 +124,12 @@ const submit = () => form.put(route('admin.galleries.artworks.update', props.gal
                         <p class="truncate text-sm font-semibold text-gray-900" :title="artwork.title">{{ artwork.title }}</p>
                     </div>
                 </label>
+            </div>
+
+            <div v-if="artworks.last_page > 1" class="mt-8 flex items-center justify-between border-t pt-5">
+                <button type="button" :disabled="!artworks.prev_page_url || form.processing" class="rounded-lg border bg-white px-4 py-2 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-40" @click="changePage(artworks.prev_page_url)">Précédent</button>
+                <p class="text-sm text-gray-600">Page {{ artworks.current_page }} sur {{ artworks.last_page }}</p>
+                <button type="button" :disabled="!artworks.next_page_url || form.processing" class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-40" @click="changePage(artworks.next_page_url)">Suivant</button>
             </div>
         </form>
     </AuthenticatedLayout>

@@ -40,22 +40,25 @@ class GalleryController extends Controller
     {
         $selectedArtworkIds = $gallery->artworks()->pluck('artworks.id');
 
+        $artworks = Artwork::with(['images' => fn ($query) => $query->orderBy('position')])
+            ->latest()
+            ->paginate(10)
+            ->withQueryString()
+            ->through(fn (Artwork $artwork) => [
+                'id' => $artwork->id,
+                'title' => $artwork->title,
+                'background_color' => $artwork->background_color,
+                'is_public' => $artwork->is_public,
+                'selected' => $selectedArtworkIds->contains($artwork->id),
+                'images' => $artwork->images->map(fn ($image) => [
+                    'id' => $image->id,
+                    'url' => Storage::url($image->image_path),
+                ])->values(),
+            ]);
+
         return Inertia::render('Admin/Galleries/Edit', [
             'gallery' => $gallery->only('name', 'slug'),
-            'artworks' => Artwork::with(['images' => fn ($query) => $query->orderBy('position')])
-                ->latest()
-                ->get()
-                ->map(fn (Artwork $artwork) => [
-                    'id' => $artwork->id,
-                    'title' => $artwork->title,
-                    'background_color' => $artwork->background_color,
-                    'is_public' => $artwork->is_public,
-                    'selected' => $selectedArtworkIds->contains($artwork->id),
-                    'images' => $artwork->images->map(fn ($image) => [
-                        'id' => $image->id,
-                        'url' => Storage::url($image->image_path),
-                    ])->values(),
-                ]),
+            'artworks' => $artworks,
         ]);
     }
 
@@ -64,11 +67,26 @@ class GalleryController extends Controller
         $validated = $request->validate([
             'artwork_ids' => ['present', 'array'],
             'artwork_ids.*' => ['integer', 'distinct', Rule::exists('artworks', 'id')],
+            'visible_artwork_ids' => ['sometimes', 'array'],
+            'visible_artwork_ids.*' => ['integer', 'distinct', Rule::exists('artworks', 'id')],
+            'page' => ['sometimes', 'integer', 'min:1'],
         ]);
 
-        $gallery->artworks()->sync($validated['artwork_ids']);
+        if (array_key_exists('visible_artwork_ids', $validated)) {
+            $selectedOnPage = array_values(array_intersect(
+                $validated['artwork_ids'],
+                $validated['visible_artwork_ids'],
+            ));
+            $gallery->artworks()->detach($validated['visible_artwork_ids']);
+            $gallery->artworks()->syncWithoutDetaching($selectedOnPage);
+        } else {
+            $gallery->artworks()->sync($validated['artwork_ids']);
+        }
 
-        return redirect()->route('admin.galleries.edit', $gallery)
+        return redirect()->route('admin.galleries.edit', [
+            'gallery' => $gallery,
+            'page' => $validated['page'] ?? null,
+        ])
             ->with('success', 'Les tableaux visibles ont été mis à jour.');
     }
 

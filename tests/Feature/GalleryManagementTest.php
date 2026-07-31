@@ -189,6 +189,9 @@ class GalleryManagementTest extends TestCase
             'position' => 1,
         ]);
         $payload = [
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'email' => 'jean.dupont@example.test',
             'artwork_id' => $artwork->id,
             'slots' => [
                 ['image_id' => $image->id, 'rotation' => 0],
@@ -197,6 +200,11 @@ class GalleryManagementTest extends TestCase
         ];
 
         $this->postJson(route('generated-compositions.store'), $payload)->assertCreated();
+        $this->assertDatabaseHas('generated_compositions', [
+            'first_name' => 'Jean',
+            'last_name' => 'Dupont',
+            'email' => 'jean.dupont@example.test',
+        ]);
         $this->postJson(route('generated-compositions.store'), $payload)
             ->assertStatus(409)
             ->assertJsonFragment(['message' => 'Ce tableau a déjà été généré et téléchargé. Modifiez au moins une image, sa position ou sa rotation pour créer un tableau unique.']);

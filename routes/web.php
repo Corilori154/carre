@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\ArtworkComposerController;
 use App\Http\Controllers\PublicArtworkComposerController;
 use App\Http\Controllers\GalleryAccessController;
 use App\Http\Controllers\GeneratedCompositionController;
+use App\Http\Controllers\Admin\GeneratedCompositionController as AdminGeneratedCompositionController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -63,6 +64,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::put('/composer', [ArtworkComposerController::class, 'update'])->name('composer.update');
 
     Route::get('/galleries', [GalleryController::class, 'index'])->name('galleries.index');
+    Route::get('/generated-compositions', [AdminGeneratedCompositionController::class, 'index'])->name('generated-compositions.index');
     Route::post('/galleries', [GalleryController::class, 'store'])->name('galleries.store');
     Route::get('/galleries/{gallery}/edit', [GalleryController::class, 'edit'])->name('galleries.edit');
     Route::patch('/galleries/{gallery}', [GalleryController::class, 'update'])->name('galleries.update');

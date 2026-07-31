@@ -45,6 +45,12 @@ const showingNavigationDropdown = ref(false);
                                 >
                                     Galeries clientes
                                 </NavLink>
+                                <NavLink
+                                    :href="route('admin.generated-compositions.index')"
+                                    :active="route().current('admin.generated-compositions.*')"
+                                >
+                                    Générations
+                                </NavLink>
                             </div>
                         </div>
 
@@ -157,6 +163,12 @@ const showingNavigationDropdown = ref(false);
                             :active="route().current('admin.galleries.*')"
                         >
                             Galeries clientes
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            :href="route('admin.generated-compositions.index')"
+                            :active="route().current('admin.generated-compositions.*')"
+                        >
+                            Générations
                         </ResponsiveNavLink>
                     </div>
 

@@ -27,6 +27,9 @@ const boardSlots = ref(Array.from({ length: 9 }, () => []))
 const boardRef = ref(null)
 const isExporting = ref(false)
 const exportError = ref('')
+const showIdentityForm = ref(false)
+const identity = ref({ first_name: '', last_name: '', email: '' })
+const identityErrors = ref({})
 
 const BOARD_OUTER_SIZE = 80
 const FRAME_SIZE = 7
@@ -113,6 +116,12 @@ function rotateImage(slotIndex) {
 
 
 
+function requestExport() {
+    exportError.value = ''
+    identityErrors.value = {}
+    showIdentityForm.value = true
+}
+
 async function exportImage() {
     if (!boardRef.value || !selectedArtwork.value) return
 
@@ -134,6 +143,9 @@ async function exportImage() {
             : route('generated-compositions.store')
 
         await axios.post(claimRoute, {
+            first_name: identity.value.first_name,
+            last_name: identity.value.last_name,
+            email: identity.value.email,
             artwork_id: selectedArtwork.value.id,
             slots: boardSlots.value.map(slot => slot.length ? {
                 image_id: slot[0].id,
@@ -147,8 +159,11 @@ async function exportImage() {
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
+        showIdentityForm.value = false
+        identity.value = { first_name: '', last_name: '', email: '' }
     } catch (error) {
         console.error('Erreur export image :', error)
+        identityErrors.value = error.response?.data?.errors || {}
         exportError.value = error.response?.data?.message
             || 'Le téléchargement a échoué. Veuillez réessayer.'
     } finally {
@@ -284,7 +299,7 @@ async function exportImage() {
             <div class="mb-6 mt-6 flex justify-center">
                 <button
                     type="button"
-                    @click="exportImage"
+                    @click="requestExport"
                     :disabled="isExporting"
                     class="rounded-xl bg-white px-6 py-3 font-semibold text-black transition hover:bg-neutral-200 disabled:cursor-wait disabled:opacity-60"
                 >
@@ -294,6 +309,35 @@ async function exportImage() {
 
             <div v-if="exportError" class="mx-auto mb-6 max-w-2xl rounded-lg border border-red-800 bg-red-950/50 p-4 text-center text-sm text-red-200">
                 {{ exportError }}
+            </div>
+
+            <div v-if="showIdentityForm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4" @click.self="!isExporting && (showIdentityForm = false)">
+                <form class="w-full max-w-md rounded-2xl border border-neutral-700 bg-neutral-900 p-6 shadow-2xl" @submit.prevent="exportImage">
+                    <h2 class="text-xl font-bold text-white">Vos informations</h2>
+                    <p class="mt-2 text-sm text-neutral-400">Renseignez vos coordonnées pour télécharger votre tableau.</p>
+                    <p v-if="exportError" class="mt-4 rounded-lg border border-red-800 bg-red-950/50 p-3 text-sm text-red-200">{{ exportError }}</p>
+                    <div class="mt-5 space-y-4">
+                        <div>
+                            <label for="download-first-name" class="mb-1 block text-sm font-medium">Prénom *</label>
+                            <input id="download-first-name" v-model.trim="identity.first_name" required autocomplete="given-name" class="w-full rounded-lg border-neutral-700 bg-neutral-950 text-white" />
+                            <p v-if="identityErrors.first_name" class="mt-1 text-sm text-red-400">{{ identityErrors.first_name[0] }}</p>
+                        </div>
+                        <div>
+                            <label for="download-last-name" class="mb-1 block text-sm font-medium">Nom *</label>
+                            <input id="download-last-name" v-model.trim="identity.last_name" required autocomplete="family-name" class="w-full rounded-lg border-neutral-700 bg-neutral-950 text-white" />
+                            <p v-if="identityErrors.last_name" class="mt-1 text-sm text-red-400">{{ identityErrors.last_name[0] }}</p>
+                        </div>
+                        <div>
+                            <label for="download-email" class="mb-1 block text-sm font-medium">Adresse e-mail *</label>
+                            <input id="download-email" v-model.trim="identity.email" type="email" required autocomplete="email" class="w-full rounded-lg border-neutral-700 bg-neutral-950 text-white" />
+                            <p v-if="identityErrors.email" class="mt-1 text-sm text-red-400">{{ identityErrors.email[0] }}</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button type="button" :disabled="isExporting" class="rounded-lg border border-neutral-600 px-4 py-2 text-sm text-neutral-200" @click="showIdentityForm = false">Annuler</button>
+                        <button type="submit" :disabled="isExporting" class="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black disabled:opacity-60">{{ isExporting ? 'Téléchargement…' : 'Télécharger' }}</button>
+                    </div>
+                </form>
             </div>
 
             <div
