@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\GeneratedComposition;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Http\RedirectResponse;
 
 class GeneratedCompositionController extends Controller
 {
@@ -28,5 +29,12 @@ class GeneratedCompositionController extends Controller
         return Inertia::render('Admin/GeneratedCompositions/Index', [
             'compositions' => $compositions,
         ]);
+    }
+
+    public function destroy(GeneratedComposition $generatedComposition): RedirectResponse
+    {
+        $generatedComposition->delete();
+
+        return to_route('admin.generated-compositions.index');
     }
 }

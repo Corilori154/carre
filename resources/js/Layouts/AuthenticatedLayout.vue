@@ -49,7 +49,7 @@ const showingNavigationDropdown = ref(false);
                                     :href="route('admin.generated-compositions.index')"
                                     :active="route().current('admin.generated-compositions.*')"
                                 >
-                                    Générations
+                                    Téléchargement tableaux composés
                                 </NavLink>
                             </div>
                         </div>
